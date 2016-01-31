@@ -1,0 +1,111 @@
+#!/bin/bash
+#
+#       java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar \
+#             -a 257.00022,49.9996349999984,379.40022,528.889635 \
+#             -f CSV \
+#             -o out.csv \
+#             ../pdf-tables-for-parsing/Border_Outer_Inner_Excel.pdf
+#             
+#   java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar -a 257.00022,49.9996349999984,379.40022,528.889635 -f CSV -o temp_out_csv ../sample_PDF_input/Border_Outer_Inner_Excel.pdf
+
+DEBUG=true
+tstdir=tests
+targt='java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar -a '
+
+COORD_FILE='/inputs/coordinates'
+OUTPUT_TYPE_FILE='/inputs/outputtype'
+PDF_FILE_NAME='/inputs/testfile'
+
+#returns current date and time when called 
+timestamp()
+{
+    date +"%d-%m-%Y %H-%M-%S"
+}
+
+#expects two arguments to print in format below:
+#   @params $1: method calling print
+#           $2: message to print 
+print()
+{
+    if [ DEBUG ]
+    then
+        if [ ${#} = 2 ]
+        then 
+            echo "$(timestamp):    METHOD: $1    MESSAGE: $2"
+        else
+            echo "$(timestamp):    MESSAGE: $1"
+        fi
+    fi
+}
+
+#print each file and the contents of the file
+#   @params:    $1=full path for file io
+#               $2=current test dir name
+runTest()   
+{
+    # print "$FUNCNAME" "starting test $2.."
+    print "starting test $2.."
+
+    # initializing ERRMSG with $'' instead of '' allows for the newline characters to take effect in output
+    ERRMSG=$''
+    if [ ! -f $1$COORD_FILE ]; then ERRMSG+=$'coordinates'; fi
+    if [ ! -f $1$OUTPUT_TYPE_FILE ]
+    then
+        if [ -n "$ERRMSG" ]; then ERRMSG+=$', '; fi 
+        ERRMSG+=$'outputtype'
+    fi
+    if [ ! -f $1$PDF_FILE_NAME ] 
+    then 
+        if [ -n "$ERRMSG" ]; then ERRMSG+=$', '; fi 
+        ERRMSG+=$'testfile' 
+    fi
+
+    # if there were any input files missing
+    if [ -n "$ERRMSG" ]; then
+        # print "$FUNCNAME" "SKIPPING TEST, INVALID INPUT FILES FOR TEST: [ $2 ]"
+        # print "$FUNCNAME" "Missing dependencies: [ $ERRMSG ] file(s) for input."
+        print "SKIPPING TEST, INVALID INPUT FILES FOR TEST: [ $2 ]"
+        print "Missing dependencies: [ $ERRMSG ] file(s) for input."
+        return
+
+    else
+        # all inputs are present, continue
+        coords=$(cat $1/inputs/coordinates)
+        ftype=$(cat $1/inputs/outputtype)
+        ftypelc=$(echo "$ftype" | tr '[:upper:]' '[:lower:]')
+        fname=$(cat $1/inputs/testfile)
+
+        # execute tabula command line
+        $targt $coords -f $ftype -i -o $1/outputs/out.$ftypelc ../sample_PDF_input/$fname
+    fi
+
+    # ToDo: Need to compare output against expected output
+    # ToDo: Log results to somewhere? 
+}
+
+#runs all the tests in tstdir
+runtests()      #$1 is program being tested
+{
+    for d in $tstdir/*  #for all files
+    do
+        # parse current test path to get test directory name without top level directory
+        # i.e., if $d = tests/1, then array would contain: array[0]=tests, array[1]=1
+        IFS='/' read -r -a array <<< "$d"
+        t=${array[1]}
+        if [ -d $d ]    #if its a directory only
+        then
+            # $d is full path, (i.e., tests/1)
+            # $t is current test (i.e., 1)
+            runTest $d $t  #then run the test 
+        fi
+    done
+    exit $r
+}
+
+# ----------------------
+# main part starts here.
+
+if [ ${#} = 0 ]
+then
+    runtests
+fi

@@ -1,1 +1,0 @@
-java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar -a 257.00022,49.9996349999984,379.40022,528.889635 -f CSV -o out.csv ../pdf-tables-for-parsing/Border_Outer_Inner_Excel.pdf
