@@ -1,16 +1,18 @@
 ## CS 481 
 Team Front-End (Alex, Ben, Brendon, Tim)
 
-## To Build:
+## Building and Running:
+
+**For Clean Build:**
 
     make clean
     make
 
-## To Run Test Suite:
+**To Run Test Suite:**
 
     cd test-suite
     ./test_runner
 
-## To Clean 
+**To Clean**
 
     make clean
