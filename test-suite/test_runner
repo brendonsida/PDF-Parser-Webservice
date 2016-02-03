@@ -8,6 +8,13 @@
 #             
 #   java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar -a 257.00022,49.9996349999984,379.40022,528.889635 -f CSV -o temp_out_csv ../sample_PDF_input/Border_Outer_Inner_Excel.pdf
 
+
+# TODO: MOVING FORWARD:
+#    1. Copy previous out.csv to out.prev.csv
+#    2. Handle coordinates for multiple tables, and pages
+# 
+# 
+
 DEBUG=true
 tstdir=tests
 targt='java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar -a '
@@ -77,10 +84,14 @@ runTest()
 
         # execute tabula command line
         $targt $coords -f $ftype -i -o $1/outputs/out.$ftypelc ../sample_PDF_input/$fname
+        # diff -d -w -y --suppress-common-lines $1/outputs/out1.csv $1/outputs/out.correct.csv | grep '^<\|^>'
+        output=`diff -d -w -y --suppress-common-lines $1/outputs/out1.csv $1/outputs/out.correct.csv | grep '^' | wc -l | xargs`
+        if [ ! $output -eq 0 ]; then
+            echo "Found: $output different lines."
+        else
+            echo "NO DIFFS!!"
+        fi
     fi
-
-    # ToDo: Need to compare output against expected output
-    # ToDo: Log results to somewhere? 
 }
 
 #runs all the tests in tstdir
