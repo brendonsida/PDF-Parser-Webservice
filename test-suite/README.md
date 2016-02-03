@@ -5,13 +5,13 @@
 |   |
 │   ├── tests
 |   |   |
-│   │   ├── <test-num>
+│   │   ├── <test-num>                (<test-num> increments by 1 for each test added)
 │   │   │   ├── inputs
-│   │   │   |   ├── coordinates
-│   │   │   |   ├── outputtype
-│   │   │   |   ├── testfile
+│   │   │   |   ├── coordinates       (contains comma separated coordinates only)
+│   │   │   |   ├── outputtype        (contains one of the following: CSV | JSON | ? )
+│   │   │   |   ├── testfile          (contains name of pdf file to test)
 │   │   │   ├── outputs
-│   │   │   |   ├── out.correct.csv
+│   │   │   |   ├── out.correct.csv   (contains expected output for specified file to compare against)
 ```
 
 **For Example:**
