@@ -1,0 +1,220 @@
+#!/bin/bash
+#
+#       java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar \
+#             -a 257.00022,49.9996349999984,379.40022,528.889635 \
+#             -f CSV \
+#             -o out.csv \
+#             ../pdf-tables-for-parsing/Border_Outer_Inner_Excel.pdf
+#             
+#   java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar -a 257.00022,49.9996349999984,379.40022,528.889635 -f CSV -o temp_out_csv ../sample_PDF_input/Border_Outer_Inner_Excel.pdf
+
+# TODO: Implement user typing "all" as command line option for test suite
+# TODO: Handle coordinates for multiple tables, and pages
+# TODO: Determine whether to save more than one previous test result?
+# TODO: What to do if output files differ? 
+
+DEBUG=true
+tstdir=tests
+targt='java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar -a '
+
+LOG_LEVEL_DEBUG='DEBUG'
+LOG_LEVEL_ERROR='ERROR'
+LOG_LEVEl_INFO='INFO'
+
+#returns the number of tests for the test suite
+getNumberOfTests()
+{
+    ls -l tests | grep ^d | wc -l | xargs
+}
+
+#returns current date and time when called in format: 'Jan 01, 2016 01:41:23 PM'
+timestamp()
+{
+    date +"%b %d, %Y %I:%M:%S %p"
+}
+
+#prints output in a readable format: [time] [test name] [log level] [message]
+#   @params $1: test number
+#           $2: log level
+#           $3: message to print 
+print()
+{
+    if [ DEBUG ]
+    then
+        if [ ${#} = 3 ]
+        then 
+            # log level
+            # case "$2" in
+            #     DEBUG)  echo "$(timestamp): TEST $1: [$2] $3";;
+            #     INFO)  echo "$(timestamp): TEST $1: [$2] $3";;
+            #     ERROR)  echo "$(timestamp): TEST $1: [$2] $3";;
+            # esac
+            # echo "[$(timestamp)] [Test $1] [$2] [-> $3 <-]" >> qa.log
+            echo "[$(timestamp)] [Test $1] [$2] [-> $3 <-]"
+        else
+            # echo "[$(timestamp)] [Test $1] [$LOG_LEVEl_INFO] [-> $2 <-]" >> qa.log
+            echo "[$(timestamp)] [Test $1] [$LOG_LEVEl_INFO] [-> $2 <-]"
+        fi
+    fi
+}
+
+removeTxtExtension()
+{
+    # echo "TODO: Need to remove .txt extensions for: $1, $2, $3"
+    mv $1.txt $1
+    mv $2.txt $2
+    mv $3.txt $3
+}
+
+#print each file and the contents of the file
+#   @params:    $1=full path for file io
+#               $2=current test dir name
+runTest()   
+{
+    COORD_FILE=$1/$2'/inputs/coordinates'
+    OUTPUT_TYPE_FILE=$1/$2'/inputs/outputtype'
+    PDF_FILE_NAME=$1/$2'/inputs/testfile'
+    OUTPUT_DIR=$1/$2'/outputs'
+
+    print $2 $LOG_LEVEl_INFO "Starting test.."
+
+    # remove .txt extension for test
+    if [ -e $COORD_FILE.txt ] || [ -e $OUTPUT_TYPE_FILE.txt ] || [ -e $PDF_FILE_NAME.txt ]
+    then 
+        removeTxtExtension $COORD_FILE $OUTPUT_TYPE_FILE $PDF_FILE_NAME
+    fi
+
+    # check input file integrity
+    # initializing ERRMSG with $'' instead of '' allows for the newline characters to take effect in output
+    ERRMSG=$''
+    if [ ! -e $COORD_FILE  ]; then ERRMSG+=$'coordinates'; fi
+    if [ ! -e $OUTPUT_TYPE_FILE ]
+    then
+        if [ -n "$ERRMSG" ]; then ERRMSG+=$', '; fi 
+        ERRMSG+=$'outputtype'
+        ERRMSG+=$'\n'
+    fi
+    if [ ! -e $PDF_FILE_NAME ] 
+    then 
+        if [ -n "$ERRMSG" ]; then ERRMSG+=$', '; fi 
+        ERRMSG+=$'testfile' 
+    fi
+
+    # any problems with input files?
+    if [ -n "$ERRMSG" ]; then
+        print $2 $LOG_LEVEL_ERROR "Invalid input files. Skipping test.."
+        print $2 $LOG_LEVEL_ERROR "Missing dependencies: [ $ERRMSG ] file(s) for input."
+        return
+
+    else
+        # all inputs are present, continue
+        coords=$(cat $COORD_FILE)
+        ftype=$(cat $OUTPUT_TYPE_FILE)
+        ftypelc=$(echo "$ftype" | tr '[:upper:]' '[:lower:]')
+        fname=$(cat $PDF_FILE_NAME)
+
+        # if old output file exists, save it
+        if [ -e $OUTPUT_DIR/out.$ftypelc ]; then
+            print $2 $LOG_LEVEL_DEBUG "Found old test results, copying to: [ $OUTPUT_DIR/out.$ftypelc => $OUTPUT_DIR/out.prev.$ftypelc ]"
+            cp $OUTPUT_DIR/out.$ftypelc $OUTPUT_DIR/out.prev.$ftypelc
+        fi
+
+        # do we have previous results to compare?
+        if [ -e $OUTPUT_DIR/out.prev.$ftypelc ]; then
+            print $2 $LOG_LEVEL_DEBUG "Verifying old test results match new results: [ $OUTPUT_DIR/out.$ftypelc => $OUTPUT_DIR/out.prev.$ftypelc ]"
+            output=`diff -d -w -y --suppress-common-lines $OUTPUT_DIR/out.csv $OUTPUT_DIR/out.prev.csv | grep '^' | wc -l | xargs`
+            if [ ! $output -eq 0 ]; then
+                print $2 $LOG_LEVEL_ERROR "New and old output differ by $output different lines."
+            fi
+        fi
+
+        # execute tabula command line
+        $targt $coords -f $ftype -i -o $OUTPUT_DIR/out.$ftypelc ../sample_PDF_input/$fname
+        output=`diff -d -w -y --suppress-common-lines $OUTPUT_DIR/out.csv $OUTPUT_DIR/out.correct.csv | grep '^' | wc -l | xargs`
+        if [ ! $output -eq 0 ]; then
+            print $2 $LOG_LEVEL_ERROR "Output differs from from expected output [ $output different lines. ]"
+        fi
+    fi
+}
+
+#remove output from test directory
+#   @params:    $1  test directory
+#               $2  test number
+removeOutput()
+{
+    if [ -e $1/$2/outputs/out.csv ]; then
+        rm -rf $1/$2/outputs/out.csv
+    fi
+
+    if [ -e $1/$2/outputs/out.old.csv ]; then
+        rm -rf $1/$2/outputs/out.old.csv
+    fi
+
+    if [ -e $1/$2/outputs/out.prev.csv ]; then
+        rm -rf $1/$2/outputs/out.prev.csv
+    fi
+}
+
+#runs the specified number of tests
+#   @params:    $1 number of tests to run
+runtests()      
+{
+    for (( testnum=1; testnum<=$1; testnum++ ))
+    do
+        if [ -d "tests"/$testnum ]
+        then
+            runTest "tests" $testnum
+        fi
+    done
+    exit $r
+}
+
+#resets the test suite to basic starting state (no output files, clean slate!!)
+clean()
+{
+    numTests=$( getNumberOfTests )
+    for (( testnum=1; testnum<=$numTests; testnum++ ))
+    do
+        if [ -d "tests"/$testnum ]
+        then
+            removeOutput "tests" $testnum
+        fi
+    done
+    exit $r
+}
+
+usage()
+{
+    echo "usage: $0 number-of-tests"
+    echo "       $0 all"
+}
+
+# -------------------------------------------------------------------------------------
+# main part starts here.
+
+# No arguments specified?
+if [ ${#} = 0 ]
+then
+    usage
+fi
+
+# Handle argument
+if [ ${#} = 1 ]; then
+
+    if [ $1 == "clean" ]; then
+        # echo "clean"
+        clean
+        exit
+        # clean
+    fi
+
+    numTests=$( getNumberOfTests )
+
+    if [ $1 -lt $numTests ]; then
+        runtests $1
+    else
+        echo "-> Sorry, maximum number of tests to run is $numTests."
+        echo "-> Please enter a number between 1 and $numTests [user entered: $1]"
+        usage
+    fi
+fi
