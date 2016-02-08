@@ -7,7 +7,7 @@
 |   |   |
 │   │   ├── <test-num>                (<test-num> increments by 1 for each test added)
 │   │   │   ├── inputs
-│   │   │   |   ├── coordinates       (contains comma separated coordinates only)
+│   │   │   |   ├── coordinates       (contains comma separated coordinates only [fmt: y1,x1,y2,x2)
 │   │   │   |   ├── outputtype        (contains one of the following: CSV | JSON | ? )
 │   │   │   |   ├── testfile          (contains name of pdf file to test)
 │   │   │   ├── outputs
