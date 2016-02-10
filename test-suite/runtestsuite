@@ -21,6 +21,8 @@ LOG_LEVEL_DEBUG='DEBUG'
 LOG_LEVEL_ERROR='ERROR'
 LOG_LEVEl_INFO='INFO'
 
+LOG_LEVEL=$LOG_LEVEL_DEBUG
+
 #returns the number of tests for the test suite
 getNumberOfTests()
 {
@@ -43,17 +45,27 @@ print()
     then
         if [ ${#} = 3 ]
         then 
-            # log level
-            # case "$2" in
-            #     DEBUG)  echo "$(timestamp): TEST $1: [$2] $3";;
-            #     INFO)  echo "$(timestamp): TEST $1: [$2] $3";;
-            #     ERROR)  echo "$(timestamp): TEST $1: [$2] $3";;
-            # esac
-            # echo "[$(timestamp)] [Test $1] [$2] [-> $3 <-]" >> qa.log
-            echo "[$(timestamp)] [Test $1] [$2] [-> $3 <-]"
-        else
-            # echo "[$(timestamp)] [Test $1] [$LOG_LEVEl_INFO] [-> $2 <-]" >> qa.log
-            echo "[$(timestamp)] [Test $1] [$LOG_LEVEl_INFO] [-> $2 <-]"
+            case "$LOG_LEVEL" in
+                "$LOG_LEVEL_DEBUG")
+                    if [ "$2" = "$LOG_LEVEL_DEBUG" ] || [ "$2" = "$LOG_LEVEl_INFO" ]; then
+                        echo "[$(timestamp)] [Test $1] [$2] [-> $3 <-]" >> qa.log
+                    elif [ "$2" = "$LOG_LEVEL_ERROR" ]; then
+                        echo "[$(timestamp)] [Test $1] [$2] [-> $3 <-]" >> error.log
+                    fi
+                    ;;
+                "$LOG_LEVEL_INFO") 
+                    if [ "$2" = "$LOG_LEVEl_INFO" ]; then
+                        echo "[$(timestamp)] [Test $1] [$2] [-> $3 <-]" >> qa.log
+                    elif [ "$2" = "$LOG_LEVEL_ERROR" ]; then
+                        echo "[$(timestamp)] [Test $1] [$2] [-> $3 <-]" >> error.log
+                    fi
+                    ;;
+                "$LOG_LEVEL_ERROR") 
+                    if [ "$2" = "$LOG_LEVEL_ERROR" ]; then
+                        echo "[$(timestamp)] [Test $1] [$2] [-> $3 <-]" >> error.log
+                    fi
+                    ;;
+            esac
         fi
     fi
 }
@@ -121,16 +133,20 @@ runTest()
 
         # do we have previous results to compare?
         if [ -e $OUTPUT_DIR/out.prev.$ftypelc ]; then
-            print $2 $LOG_LEVEL_DEBUG "Verifying old test results match new results: [ $OUTPUT_DIR/out.$ftypelc => $OUTPUT_DIR/out.prev.$ftypelc ]"
+            print $2 $LOG_LEVEL_DEBUG "Verifying old test results match new results"
             output=`diff -d -w -y --suppress-common-lines $OUTPUT_DIR/out.csv $OUTPUT_DIR/out.prev.csv | grep '^' | wc -l | xargs`
             if [ ! $output -eq 0 ]; then
                 print $2 $LOG_LEVEL_ERROR "New and old output differ by $output different lines."
+            else
+                print $2 $LOG_LEVEL_DEBUG "NEW and OLD output match."
             fi
         fi
 
         # execute tabula command line
         $targt $coords -f $ftype -i -o $OUTPUT_DIR/out.$ftypelc ../sample_PDF_input/$fname
-        output=`diff -d -w -y --suppress-common-lines $OUTPUT_DIR/out.csv $OUTPUT_DIR/out.correct.csv | grep '^' | wc -l | xargs`
+        sed 's/\"//g' $OUTPUT_DIR/out.$ftypelc > $OUTPUT_DIR/out.trimd.$ftypelc
+        sed 's/\"//g' $OUTPUT_DIR/out.correct.$ftypelc > $OUTPUT_DIR/out.correct.trimd.$ftypelc
+        output=`diff -d -w --suppress-common-lines $OUTPUT_DIR/out.trimd.$ftypelc $OUTPUT_DIR/out.correct.trimd.$ftypelc | grep '^' | wc -l | xargs`
         if [ ! $output -eq 0 ]; then
             print $2 $LOG_LEVEL_ERROR "Output differs from from expected output [ $output different lines. ]"
         fi
@@ -144,6 +160,10 @@ removeOutput()
 {
     if [ -e $1/$2/outputs/out.csv ]; then
         rm -rf $1/$2/outputs/out.csv
+    fi
+
+    if [ -e $1/$2/outputs/out.trimd.csv ]; then
+        rm -rf $1/$2/outputs/out.trimd.csv
     fi
 
     if [ -e $1/$2/outputs/out.old.csv ]; then
@@ -191,6 +211,11 @@ usage()
 
 # -------------------------------------------------------------------------------------
 # main part starts here.
+# 
+
+if [ -e error.log ]; then
+    rm -rf error.log
+fi
 
 # No arguments specified?
 if [ ${#} = 0 ]
@@ -206,15 +231,19 @@ if [ ${#} = 1 ]; then
         clean
         exit
         # clean
+    elif [ $1 == "all" ]; then
+        userNumTests=$( getNumberOfTests )
+    else
+        userNumTests=$1
     fi
 
     numTests=$( getNumberOfTests )
 
-    if [ $1 -lt $numTests ]; then
-        runtests $1
-    else
+    if [ $userNumTests -gt $numTests ]; then
         echo "-> Sorry, maximum number of tests to run is $numTests."
         echo "-> Please enter a number between 1 and $numTests [user entered: $1]"
         usage
+    else
+        runtests $userNumTests
     fi
 fi
