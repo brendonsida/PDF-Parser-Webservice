@@ -23,6 +23,73 @@ LOG_LEVEl_INFO='INFO'
 
 LOG_LEVEL=$LOG_LEVEL_DEBUG
 
+PASSED=0
+FAILED=0
+
+EXCEL_F_INT=0
+EXCEL_P_INT=0
+EXCEL_F_STR=""
+EXCEL_P_STR=""
+
+OPEN_F_INT=0
+OPEN_P_INT=0
+OPEN_F_STR=""
+OPEN_P_STR=""
+
+WORD_F_INT=0
+WORD_P_INT=0
+WORD_F_STR=""
+WORD_P_STR=""
+
+#check for Excell | Word | Open in the filename and report only for failed tests.
+#                   $1 = input file name: i.e., border_outter_inner_word.pdf
+# reportFileOrigin() 
+# {
+# }
+# 
+reportTestPassed()
+{
+    ((PASSED++))
+
+    case "$2" in
+    *Word* | *word*)
+        ((WORD_P_INT++))
+        WORD_P_STR="${WORD_P_STR}Test #$1: $2\n"
+        ;;
+    *Excel* | *excel*)
+        ((EXCEL_P_INT++))
+        EXCEL_P_STR="${EXCEL_P_STR}Test #$1: $2\n"
+        ;;
+    *Open* | *open*)
+        ((OPEN_P_INT++))
+        OPEN_P_STR="${OPEN_P_STR}Test #$1: $2\n"
+        ;;
+    esac
+}
+
+#
+#                   $1 = test directory name
+#                   $2 = input file name
+reportTestFailure()
+{
+    ((FAILED++))
+
+    case "$2" in
+    *Excel* | *excel*)
+        ((EXCEL_F_INT++))
+        EXCEL_F_STR="${EXCEL_F_STR}Test #$1: $2\n"
+        ;;
+    *Open* | *open*)
+        ((OPEN_F_INT++))
+        OPEN_F_STR="${OPEN_F_STR}Test #$1: $2\n"
+        ;;
+    *Word* | *word*)
+        ((WORD_F_INT++))
+        WORD_F_STR="${WORD_F_STR}Test #$1: $2\n"
+        ;;
+    esac
+}
+
 #returns the number of tests for the test suite
 getNumberOfTests()
 {
@@ -144,11 +211,18 @@ runTest()
 
         # execute tabula command line
         $targt $coords -f $ftype -i -o $OUTPUT_DIR/out.$ftypelc ../sample_PDF_input/$fname
+
+        # trim both output files of Quotations
         sed 's/\"//g' $OUTPUT_DIR/out.$ftypelc > $OUTPUT_DIR/out.trimd.$ftypelc
         sed 's/\"//g' $OUTPUT_DIR/out.correct.$ftypelc > $OUTPUT_DIR/out.correct.trimd.$ftypelc
-        output=`diff -d -w --suppress-common-lines $OUTPUT_DIR/out.trimd.$ftypelc $OUTPUT_DIR/out.correct.trimd.$ftypelc | grep '^' | wc -l | xargs`
+
+        # Run diff
+        output=`diff -b -d -w --suppress-common-lines $OUTPUT_DIR/out.trimd.$ftypelc $OUTPUT_DIR/out.correct.trimd.$ftypelc | grep '^' | wc -l | xargs`
         if [ ! $output -eq 0 ]; then
+            reportTestFailure $2 $fname
             print $2 $LOG_LEVEL_ERROR "Output differs from from expected output [ $output different lines. ]"
+        else
+            reportTestPassed $2 $fname 
         fi
     fi
 }
@@ -158,21 +232,49 @@ runTest()
 #               $2  test number
 removeOutput()
 {
-    if [ -e $1/$2/outputs/out.csv ]; then
-        rm -rf $1/$2/outputs/out.csv
+    if [ -e $1/outputs/out.csv ]; then
+        rm -rf $1/outputs/out.csv
     fi
 
-    if [ -e $1/$2/outputs/out.trimd.csv ]; then
-        rm -rf $1/$2/outputs/out.trimd.csv
+    if [ -e $1/outputs/out.trimd.csv ]; then
+        rm -rf $1/outputs/out.trimd.csv
     fi
 
-    if [ -e $1/$2/outputs/out.old.csv ]; then
-        rm -rf $1/$2/outputs/out.old.csv
+    if [ -e $1/outputs/out.correct.trimd.csv ]; then
+        rm -rf $1/outputs/out.correct.trimd.csv
     fi
 
-    if [ -e $1/$2/outputs/out.prev.csv ]; then
-        rm -rf $1/$2/outputs/out.prev.csv
+    if [ -e $1/outputs/out.old.csv ]; then
+        rm -rf $1/outputs/out.old.csv
     fi
+
+    if [ -e $1/outputs/out.prev.csv ]; then
+        rm -rf $1/outputs/out.prev.csv
+    fi
+}
+
+printResults()
+{
+    echo `clear`
+    echo "========================================================="
+    echo "Tests Passed: $PASSED"
+    echo "========================================================="
+    echo "=> Passed files created from Excel: [$EXCEL_P_INT]"
+    echo -e "$EXCEL_P_STR"
+    echo "=> Passed files created from OpenOffice: [$OPEN_P_INT]"
+    echo -e "$OPEN_P_STR"
+    echo "=> Passed files created from Word: [$WORD_P_INT]"
+    echo -e "$WORD_P_STR"
+
+    echo "========================================================="
+    echo "Tests Failed: $FAILED"                                   
+    echo "========================================================="
+    echo "=> Failed files created from Excel: [$EXCEL_F_INT]"
+    echo -e "$EXCEL_F_STR"
+    echo "=> Failed files created from OpenOffice: [$OPEN_F_INT]"
+    echo -e "$OPEN_F_STR"
+    echo "=> Failed files created from Word: [$WORD_F_INT]"
+    echo -e "$WORD_F_STR"
 }
 
 #runs the specified number of tests
@@ -186,6 +288,7 @@ runtests()
             runTest "tests" $testnum
         fi
     done
+    printResults
     exit $r
 }
 
@@ -197,7 +300,8 @@ clean()
     do
         if [ -d "tests"/$testnum ]
         then
-            removeOutput "tests" $testnum
+            testPath="tests/$testnum"
+            removeOutput $testPath
         fi
     done
     exit $r
