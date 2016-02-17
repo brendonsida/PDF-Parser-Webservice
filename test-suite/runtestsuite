@@ -8,7 +8,6 @@
 #             
 #   java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar -a 257.00022,49.9996349999984,379.40022,528.889635 -f CSV -o temp_out_csv ../sample_PDF_input/Border_Outer_Inner_Excel.pdf
 
-# TODO: Implement user typing "all" as command line option for test suite
 # TODO: Handle coordinates for multiple tables, and pages
 # TODO: Determine whether to save more than one previous test result?
 # TODO: What to do if output files differ? 
@@ -17,12 +16,16 @@ DEBUG=true
 tstdir=tests
 targt='java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar -a '
 
+# =============================================================================
+# TEST RESULT VARIABLES
 LOG_LEVEL_DEBUG='DEBUG'
 LOG_LEVEL_ERROR='ERROR'
 LOG_LEVEl_INFO='INFO'
 
 LOG_LEVEL=$LOG_LEVEL_DEBUG
 
+# =============================================================================
+# TEST RESULT VARIABLES
 PASSED=0
 FAILED=0
 
@@ -41,12 +44,16 @@ WORD_P_INT=0
 WORD_F_STR=""
 WORD_P_STR=""
 
-#check for Excell | Word | Open in the filename and report only for failed tests.
-#                   $1 = input file name: i.e., border_outter_inner_word.pdf
-# reportFileOrigin() 
-# {
-# }
-# 
+#==============================================================================#
+#                                                                              #
+#  RESULT / PRINT UTILITES                                                     #
+#                                                                              #
+#==============================================================================#
+
+#increments the corresponding pass variable as well as append's on the new 
+#test that passed onto the respective output string variables.
+#   @params $1: Test Number (name of directory)
+#           $2: Input file name 
 reportTestPassed()
 {
     ((PASSED++))
@@ -67,9 +74,10 @@ reportTestPassed()
     esac
 }
 
-#
-#                   $1 = test directory name
-#                   $2 = input file name
+#increments the corresponding failed variable as well as append's on the new 
+#test that failed onto the respective output string variables.
+#   @params $1: Test Number (name of directory)
+#           $2: Input file name 
 reportTestFailure()
 {
     ((FAILED++))
@@ -90,16 +98,29 @@ reportTestFailure()
     esac
 }
 
-#returns the number of tests for the test suite
-getNumberOfTests()
+#print the test results
+printResults()
 {
-    ls -l tests | grep ^d | wc -l | xargs
-}
+    echo `clear`
+    echo "========================================================="
+    echo "Tests Passed: $PASSED"
+    echo "========================================================="
+    echo "=> Passed files created from Excel: [$EXCEL_P_INT]"
+    echo -e "$EXCEL_P_STR"
+    echo "=> Passed files created from OpenOffice: [$OPEN_P_INT]"
+    echo -e "$OPEN_P_STR"
+    echo "=> Passed files created from Word: [$WORD_P_INT]"
+    echo -e "$WORD_P_STR"
 
-#returns current date and time when called in format: 'Jan 01, 2016 01:41:23 PM'
-timestamp()
-{
-    date +"%b %d, %Y %I:%M:%S %p"
+    echo "========================================================="
+    echo "Tests Failed: $FAILED"                                   
+    echo "========================================================="
+    echo "=> Failed files created from Excel: [$EXCEL_F_INT]"
+    echo -e "$EXCEL_F_STR"
+    echo "=> Failed files created from OpenOffice: [$OPEN_F_INT]"
+    echo -e "$OPEN_F_STR"
+    echo "=> Failed files created from Word: [$WORD_F_INT]"
+    echo -e "$WORD_F_STR"
 }
 
 #prints output in a readable format: [time] [test name] [log level] [message]
@@ -137,13 +158,11 @@ print()
     fi
 }
 
-removeTxtExtension()
-{
-    # echo "TODO: Need to remove .txt extensions for: $1, $2, $3"
-    mv $1.txt $1
-    mv $2.txt $2
-    mv $3.txt $3
-}
+#==============================================================================#
+#                                                                              #
+#  TEST EXECUTION                                                              #
+#                                                                              #
+#==============================================================================#
 
 #print each file and the contents of the file
 #   @params:    $1=full path for file io
@@ -227,6 +246,60 @@ runTest()
     fi
 }
 
+#runs the specified number of tests
+#   @params:    $1 number of tests to run
+runtests()      
+{
+    for (( testnum=1; testnum<=$1; testnum++ ))
+    do
+        if [ -d "tests"/$testnum ]
+        then
+            runTest "tests" $testnum
+        fi
+    done
+    printResults
+    exit $r
+}
+
+#==============================================================================#
+#                                                                              #
+# COMMAND-LINE OPTIONS                                                         #
+#                                                                              #
+#==============================================================================#
+
+#resets the test suite to basic starting state (no output files, clean slate!!)
+clean()
+{
+    numTests=$( getNumberOfTests )
+    for (( testnum=1; testnum<=$numTests; testnum++ ))
+    do
+        if [ -d "tests"/$testnum ]
+        then
+            testPath="tests/$testnum"
+            removeOutput $testPath
+        fi
+    done
+    exit $r
+}
+
+#==============================================================================#
+#                                                                              #
+# UTILITIES                                                                    #
+#                                                                              #
+#==============================================================================#
+
+#remove .txt extension from input files
+#   @params:    $1  coordinates.txt
+#               $2  outputtype.txt
+#               $3  testfile.txt
+removeTxtExtension()
+{
+    # echo "TODO: Need to remove .txt extensions for: $1, $2, $3"
+    mv $1.txt $1
+    mv $2.txt $2
+    mv $3.txt $3
+}
+
 #remove output from test directory
 #   @params:    $1  test directory
 #               $2  test number
@@ -253,58 +326,16 @@ removeOutput()
     fi
 }
 
-printResults()
+#returns the number of tests for the test suite
+getNumberOfTests()
 {
-    echo `clear`
-    echo "========================================================="
-    echo "Tests Passed: $PASSED"
-    echo "========================================================="
-    echo "=> Passed files created from Excel: [$EXCEL_P_INT]"
-    echo -e "$EXCEL_P_STR"
-    echo "=> Passed files created from OpenOffice: [$OPEN_P_INT]"
-    echo -e "$OPEN_P_STR"
-    echo "=> Passed files created from Word: [$WORD_P_INT]"
-    echo -e "$WORD_P_STR"
-
-    echo "========================================================="
-    echo "Tests Failed: $FAILED"                                   
-    echo "========================================================="
-    echo "=> Failed files created from Excel: [$EXCEL_F_INT]"
-    echo -e "$EXCEL_F_STR"
-    echo "=> Failed files created from OpenOffice: [$OPEN_F_INT]"
-    echo -e "$OPEN_F_STR"
-    echo "=> Failed files created from Word: [$WORD_F_INT]"
-    echo -e "$WORD_F_STR"
+    ls -l tests | grep ^d | wc -l | xargs
 }
 
-#runs the specified number of tests
-#   @params:    $1 number of tests to run
-runtests()      
+#returns current date and time when called in format: 'Jan 01, 2016 01:41:23 PM'
+timestamp()
 {
-    for (( testnum=1; testnum<=$1; testnum++ ))
-    do
-        if [ -d "tests"/$testnum ]
-        then
-            runTest "tests" $testnum
-        fi
-    done
-    printResults
-    exit $r
-}
-
-#resets the test suite to basic starting state (no output files, clean slate!!)
-clean()
-{
-    numTests=$( getNumberOfTests )
-    for (( testnum=1; testnum<=$numTests; testnum++ ))
-    do
-        if [ -d "tests"/$testnum ]
-        then
-            testPath="tests/$testnum"
-            removeOutput $testPath
-        fi
-    done
-    exit $r
+    date +"%b %d, %Y %I:%M:%S %p"
 }
 
 usage()
@@ -313,12 +344,20 @@ usage()
     echo "       $0 all"
 }
 
-# -------------------------------------------------------------------------------------
-# main part starts here.
-# 
+#==============================================================================#
+#                                                                              #
+#  MAIN AREA                                                                   #
+#                                                                              #
+#==============================================================================#
 
+# remove previous error log
 if [ -e error.log ]; then
     rm -rf error.log
+fi
+
+# remove previous qa log
+if [ -e qa.log ]; then
+    rm -rf qa.log
 fi
 
 # No arguments specified?
