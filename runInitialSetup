@@ -1,0 +1,36 @@
+#!/bin/sh
+#cd tabula-java
+#git submodule init
+#git submodule update
+#git pull
+
+TARGET="tabula-java"
+BACKUP="tabula-java-backup"
+
+function clean_project()
+{
+    make clean
+}
+
+function init_tabula_repo()
+{
+    git submodule init
+}
+
+function update_tabula_repo()
+{
+    git submodule update
+    git pull
+}
+
+#==============================================================================
+# MAIN
+
+clean_project
+
+if [ -e $TARGET ]; then
+    echo "Initing tabula repo"
+    init_tabula_repo
+    update_tabula_repo
+fi
+
