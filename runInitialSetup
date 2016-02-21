@@ -23,14 +23,23 @@ function update_tabula_repo()
     git pull
 }
 
+function go_to_tabula_directory()
+{
+    cd $TARGET
+}
+
 #==============================================================================
 # MAIN
 
 clean_project
+go_to_tabula_directory
 
-if [ -e $TARGET ]; then
-    echo "Initing tabula repo"
+if [ -e $TARGET/src ]; then
+    echo "Initing tabula repo: $PWD"
     init_tabula_repo
     update_tabula_repo
+else
+    echo "Updating tabula repo: $PWD"
+    git pull
 fi
 
