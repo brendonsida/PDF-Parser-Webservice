@@ -31,9 +31,11 @@ function go_to_tabula_directory()
 #==============================================================================
 # MAIN
 
-clean_project
-go_to_tabula_directory
+if [ -e $TARGET/target ]; then
+    clean_project
+fi
 
+# go_to_tabula_directory
 if [ -e $TARGET/src ]; then
     echo "Initing tabula repo: $PWD"
     init_tabula_repo
