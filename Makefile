@@ -10,11 +10,8 @@ TESTSUITE=test-suite
 all: $(PROGS)
 
 app: 
-	./$(HEALTHCHECK); \
-	cd $(TABULA); \
-	mvn clean compile assembly:single; \
-	cp -Rv $(TABULA_JAR) ../$(TESTSUITE); \
-	cp -Rv $(TABULA_JAR) ../$(SERVERSRC)
+	./$(HEALTHCHECK)
+	cd $(TABULA); mvn clean compile assembly:single
 	cd $(SERVER); make
 
 # server:

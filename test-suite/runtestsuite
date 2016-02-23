@@ -14,7 +14,7 @@
 
 DEBUG=true
 tstdir=tests
-targt='java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar -a '
+targt='java -jar ../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar -a '
 
 # =============================================================================
 # TEST RESULT VARIABLES
