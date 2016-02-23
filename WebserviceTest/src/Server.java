@@ -7,6 +7,10 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+<<<<<<< HEAD
+=======
+// import org.apache.pdfbox.examples.pdmodel.Annotation;
+>>>>>>> e835dfdb47baf21718c4c3ba0ff481f01d7ae287
 
 public class Server {
 
@@ -48,8 +52,9 @@ public class Server {
             String fname = toPDFFile(is);
             byte[] b = loadFile(fname);
             String coords = getCoordinates(b);
+            System.out.println("Coords: " + coords);
             System.out.println("Hello");
-            System.out.println(JarExec("../../tabula-cmdline/target/tabula-0.8.0-jar-with-dependencies.jar"));
+            System.out.println(JarExec("./target/tabula-0.8.0-jar-with-dependencies.jar"));
             System.out.println("Goodbye");
             //
             //Code to connect here
@@ -73,9 +78,13 @@ public class Server {
             String fname = toPDFFile(is);
             byte[] b = loadFile(fname);
             String coords = getCoordinates(b);
+<<<<<<< HEAD
             try{
             	Annotater.main(new String[]{"test1.pdf","test.pdf"});
             }catch(Exception e){}
+=======
+            // Annotation.main("test.pdf");
+>>>>>>> e835dfdb47baf21718c4c3ba0ff481f01d7ae287
             //
             //Code to connect here
             //
@@ -162,6 +171,7 @@ public class Server {
         return coords;
     }
     static String JarExec(String filepath){
+        System.out.println("JarExec filepath: " + filepath);
     	String ret = "Cannot run jar"; 
     	Runtime r = Runtime.getRuntime();
     	Process p;
