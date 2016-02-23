@@ -1,7 +1,7 @@
 HEALTHCHECK=checkProjectDependencies
-PROGS=app server
-SERVER=WebserviceTest
-SERVERSRC=src
+PROGS=app
+SERVER=webserver
+SERVERSRC=$(SERVER)/src
 SERVERSTORAGE=www
 TABULA=tabula-java
 TABULA_JAR=target
@@ -14,12 +14,17 @@ app:
 	cd $(TABULA); \
 	mvn clean compile assembly:single; \
 	cp -Rv $(TABULA_JAR) ../$(TESTSUITE); \
-	cp -Rv $(TABULA_JAR) ../$(SERVER)/$(SERVERSRC)
+	cp -Rv $(TABULA_JAR) ../$(SERVERSRC)
+	cd $(SERVER); make
 
-server:
-	javac $(SERVER)/$(SERVERSRC)/Server.java
+# server:
+# 	javac $(SERVER)/$(SERVERSRC)/Server.java
 
 clean:
+	cd $(SERVER); make clean
+	cd test-suite; ./runtestsuite clean
+
+cleaninstall:
 	cd $(TABULA); mvn clean
-	cd $(SERVER); rm -fr $(SERVERSRC)/*.class $(SERVERSRC)/$(TABULA_JAR) $(SERVERSTORAGE)/*.pdf
+	cd $(SERVER); make cleaninstall
 	cd test-suite; rm -fr $(TABULA_JAR); ./runtestsuite clean

@@ -20,7 +20,7 @@ public class ExecTest
     System.out.print(args);
     commands.add("java");
     commands.add("-jar");
-    commands.add("./target/tabula-0.8.0-jar-with-dependencies.jar");
+    commands.add(path);
     commands.add("-g"+args);
  
     SystemCommandExecutor commandExecutor = new SystemCommandExecutor(commands);
