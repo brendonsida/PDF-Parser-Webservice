@@ -42,9 +42,9 @@ public class Annotater
      */
     public static void main( String[] args ) throws Exception
     {
-        if( args.length != 2 )
+        if( args.length != 6 )
         {
-            System.out.println("Usage: <input pdf> <output file>");
+            System.out.println("Usage: <input pdf> <output file> <lower left x> <lower left y> <upper right x> <upper right y>");
         }
         else
         {
@@ -132,10 +132,10 @@ public class Annotater
                 // 3.5" down, 1" in from the right on the page
 
                 position = new PDRectangle(); // Reuse the variable, but note it's a new object!
-                position.setLowerLeftX(pw-(2*inch));  // 1" in from right, 1" wide
-                position.setLowerLeftY(ph-(float)(3.5*inch) - inch); // 1" height, 3.5" down
-                position.setUpperRightX(pw-inch); // 1" in from right
-                position.setUpperRightY(ph-(float)(3.5*inch)); // 3.5" down
+                position.setLowerLeftX(pw-(Integer.parseInt(args[2])*inch));  // 1" in from right, 1" wide
+                position.setLowerLeftY(ph-(float)(Integer.parseInt(args[3])*inch) - inch); // 1" height, 3.5" down
+                position.setUpperRightX(pw-(Integer.parseInt(args[4])*inch)); // 1" in from right
+                position.setUpperRightY(ph-(float)(Integer.parseInt(args[5])*inch)); // 3.5" down
                 aSquare.setRectangle(position);
 
                 //  add to the annotations on the page
