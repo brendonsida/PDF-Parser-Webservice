@@ -7,7 +7,6 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import org.apache.pdfbox.examples.pdmodel.Annotation;
 
 public class Server {
 
@@ -74,7 +73,9 @@ public class Server {
             String fname = toPDFFile(is);
             byte[] b = loadFile(fname);
             String coords = getCoordinates(b);
-            Annotation.main("test.pdf");
+            try{
+            	Annotater.main(new String[]{"test1.pdf","test.pdf"});
+            }catch(Exception e){}
             //
             //Code to connect here
             //
