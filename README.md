@@ -13,6 +13,10 @@ Team Front-End (Alex, Ben, Brendon, Tim)
     cd test-suite
     ./test_runner
 
-**To Clean**
+**To Clean Compiled Files and Keep Tabula Compiled Files**
 
     make clean
+
+**To Clean Entire Project:**
+
+    make cleaninstall
