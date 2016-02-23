@@ -7,10 +7,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-<<<<<<< HEAD
-=======
-// import org.apache.pdfbox.examples.pdmodel.Annotation;
->>>>>>> e835dfdb47baf21718c4c3ba0ff481f01d7ae287
+import org.apache.pdfbox.examples.pdmodel.Annotation;
 
 public class Server {
 
@@ -78,13 +75,10 @@ public class Server {
             String fname = toPDFFile(is);
             byte[] b = loadFile(fname);
             String coords = getCoordinates(b);
-<<<<<<< HEAD
             try{
             	Annotater.main(new String[]{"test1.pdf","test.pdf"});
             }catch(Exception e){}
-=======
-            // Annotation.main("test.pdf");
->>>>>>> e835dfdb47baf21718c4c3ba0ff481f01d7ae287
+
             //
             //Code to connect here
             //
