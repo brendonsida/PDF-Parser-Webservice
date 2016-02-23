@@ -5,8 +5,15 @@ Team Front-End (Alex, Ben, Brendon, Tim)
 
 **For Clean Build:**
 
-    make clean
+    make cleaninstall
     make
+    
+**To Start WebServices:**
+
+    cd webserver/src 
+    ./run.sh
+    
+The webservice runs on localhost:8080.
 
 **To Run Test Suite:**
 
