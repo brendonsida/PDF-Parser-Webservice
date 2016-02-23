@@ -75,7 +75,9 @@ public class Server {
             byte[] b = loadFile(fname);
             String coords = getCoordinates(b);
             try{
-            	Annotater.main(new String[]{"test1.pdf","test.pdf"});
+            	Annotater.main(new String[]{fname,fname});
+            	System.out.println(fname);
+            	System.out.println(fname.split("/")[2]);
             }catch(Exception e){}
 
             //
@@ -169,9 +171,9 @@ public class Server {
     	Runtime r = Runtime.getRuntime();
     	Process p;
 		try {
-			p = r.exec("java -jar "+filepath);
-			System.out.println("Checkpoint1");
-		  	InputStream is = p.getInputStream();
+                p = r.exec("java -jar "+filepath);
+                System.out.println("Checkpoint1");
+                InputStream is = p.getInputStream();
 	    	InputStream es = p.getErrorStream();
 	    	System.out.println("Checkpoint2");
 	    	ByteArrayOutputStream buffer = new ByteArrayOutputStream();
