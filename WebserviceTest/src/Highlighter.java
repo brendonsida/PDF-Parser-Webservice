@@ -39,14 +39,14 @@ public class Highlighter
      */
     public static void main( String[] args ) throws Exception
     {
-        if( args.length != 3 ) {
-            System.out.println("Usage: <input pdf> <coords file> <output file>");
+        if( args.length != 2 ) {
+            System.out.println("Usage: <input pdf> <coords file>");
         }
         else {
-        	File file = new File("C:\\Users\\Tim\\Desktop\\" + args[0]);  
+        	File file = new File(args[0]);  
         	PDDocument document = PDDocument.load(file);
         	
-        	File file2 = new File("C:\\Users\\Tim\\Desktop\\" + args[1]);   
+        	File file2 = new File(args[1]);   
         	Scanner inFile = null;
         	String sequence = "";
         	try {
@@ -117,7 +117,7 @@ public class Highlighter
                 
                 //  add to the annotations on the page
                 annotations.add(aHighlight);
-                document.save(args[2]);
+                document.save(args[0]);
             }
             finally {
                 document.close();

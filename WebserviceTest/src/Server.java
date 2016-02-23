@@ -49,16 +49,13 @@ public class Server {
             byte[] b = loadFile(fname);
             String coords = getCoordinates(b);
             System.out.println("Coords: " + coords);
-            System.out.println("Hello");
-            System.out.println(JarExec("./target/tabula-0.8.0-jar-with-dependencies.jar"));
-            System.out.println("Goodbye");
             //
             //Code to connect here
             //
             //
-            byte[] finished = loadFile(fname);
+            byte[] finished = loadFile(toFile(JarExec("./target/tabula-0.8.0-jar-with-dependencies.jar", fname),"csv"));
             Headers responseHeaders = t.getResponseHeaders();
-            responseHeaders.set("Content-Type","application/pdf");
+            responseHeaders.set("Content-Type","text/csv");
             responseHeaders.set("Content-Disposition", "attachment; filename=\""+fname.split("/")[1]+"\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
@@ -75,7 +72,7 @@ public class Server {
             byte[] b = loadFile(fname);
             String coords = getCoordinates(b);
             try{
-            	Annotater.main(new String[]{fname,fname});
+            	Highlighter.main(new String[]{fname,"coords.txt"});
             	System.out.println(fname);
             	System.out.println(fname.split("/")[2]);
             }catch(Exception e){}
@@ -141,6 +138,24 @@ public class Server {
         return fname;
     }
 
+    static String toFile(String contents, String type){
+        String fname = "";
+        try {
+        
+           byte[] b = contents.getBytes();
+           fname = "../www/" + System.currentTimeMillis() + "."+type;
+           File f = new File(fname);
+           f.createNewFile();
+           FileOutputStream fos = new FileOutputStream(f);
+           fos.write(b);
+           fos.flush();
+           fos.close();
+       }catch (Exception e){
+           return "";
+       }
+        return fname;
+    }
+    
     static byte[] loadFile(String fname){
         byte[]b;
         try {
@@ -165,88 +180,12 @@ public class Server {
         String coords = scan.nextLine();
         return coords;
     }
-    static String JarExec(String filepath){
-        System.out.println("JarExec filepath: " + filepath);
-    	String ret = "Cannot run jar"; 
-    	Runtime r = Runtime.getRuntime();
-    	Process p;
-		try {
-                p = r.exec("java -jar "+filepath);
-                System.out.println("Checkpoint1");
-                InputStream is = p.getInputStream();
-	    	InputStream es = p.getErrorStream();
-	    	System.out.println("Checkpoint2");
-	    	ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-	           int nRead;
-	           byte[] data = new byte[4096];
-	           while ((nRead = is.read(data, 0, data.length)) != -1) {
-	               buffer.write(data, 0, nRead);
-	           }
-	           buffer.flush();
-	           System.out.println("Checkpoint3");
-	           byte[] b = buffer.toByteArray();
-	           return new String(b);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-  
-    	/*
-    	
-    	Process exec = new Process("java -jar "+ filepath);
-    	ProcessBuilder pb = new ProcessBuilder("java", "-jar", filepath);
-         System.out.println("Checkpoint2");
-         try {
-             Process p = pb.start();
-             if(p == null){return "Broken";}
-             System.out.println("Checkpoint3");
-             LogStreamReader lsr = new LogStreamReader(p.getInputStream());
-             System.out.println("Checkpoint4");
-             Thread thread = new Thread(lsr, "LogStreamReader");
-             System.out.println("Checkpoint5");
-             thread.start();
-             System.out.println("Checkpoint6");
-             thread.join();
-             ret = lsr.toString();
-             return ret;
-             //System.out.println("Checkpoint7");
-             //if(ret.equals(null)){return ret = "Null returned";}
-             
-         } catch (IOException e) {
-             e.printStackTrace();
-         } catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-         */
-         System.out.println("Checkpoint8");
-         return ret;
-    }   
-}
-
-class LogStreamReader implements Runnable {
-
-    private BufferedReader reader;
-    String s;
-    public LogStreamReader(InputStream is) {
-        this.reader = new BufferedReader(new InputStreamReader(is));
+    static String JarExec(String filepath, String fname){
+      try{
+      return ExecTest.main(new String[]{filepath,fname});
+      }catch(Exception e){
+        return "Could not run Tabula";
+      }
     }
-
-    public void run() {
-        try {
-            String line = reader.readLine();
-            while (line != null) {
-                System.out.println(line);
-                s = s+line;
-                line = reader.readLine();
-            }
-            reader.close();
-            
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    public String toString(){
-    return s;	
-    }
+    
 }
