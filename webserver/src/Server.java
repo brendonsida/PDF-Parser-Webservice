@@ -104,7 +104,7 @@ public class Server {
         public void handle(HttpExchange t) throws IOException {
             String response = "This is the find response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
             try {
-                File f = new File("../www/assets/html/index.html");
+                File f = new File("../www/html/index.html");
                 byte[] b = new byte[(int) f.length()];
                 FileInputStream fis = new FileInputStream(f);
                 fis.read(b);
