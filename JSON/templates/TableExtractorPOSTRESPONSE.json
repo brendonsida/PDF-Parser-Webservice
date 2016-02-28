@@ -1,0 +1,72 @@
+{
+    "fileName": "name-of-file-parsed.pdf",
+    "fileUrl": "maybe-path-to-file?",
+    "extracted-data": {
+        "tables": [
+            {
+                "page": "1",
+                "title": "some-title-for-table",
+                "rowList": [
+                    {
+                        "Minimum,Interest,Term(Months),Balance,Lender"
+                    },
+                    {
+                        "\"$21.20\",3.50%,6,$233.39,Citi"
+                    },
+                    {
+                        "\"$3.39\",4.50%,144,$3.39,Ford"
+                    },
+                    {
+                        "\"$14.00\",1.50%,12,$233.00,BarClay"
+                    },
+                    {
+                        "\"$50.00\",3.55%,12,\"$2,333.39\",Apple"
+                    },
+                    {
+                        "\"$310.33\",3.99%,72,\"$23,453.39\",Volkswagon"
+                    },
+                    {
+                        "\"$75.10\",23.49%,24,\"$2,331.39\",ICCU"
+                    },
+                    {
+                        "\"$212.33\",15.99%,60,\"$9,233.39\",Bank of America"
+                    },
+                ]
+            },
+            {
+                "page": "69",
+                "title": "some-title-for-table",
+                "rowList": [
+                    {
+                        ",,,Original Term"
+                    },
+                    {
+                        "Trust Asset,,,To Maturity"
+                    },
+                    {
+                        "Group,Trust Asset Type,Certificate Rate,(in years)"
+                    },
+                    {
+                        "1,Ginnie MaeI,4.5%,30"
+                    },
+                    {
+                        "2,Ginnie MaeII,5.5%,30"
+                    },
+                    {
+                        "3,Ginnie MaeI,5.5%,30"
+                    },
+                    {
+                        "4,Ginnie MaeII,6.0%,30"
+                    },
+                    {
+                        "5,Ginnie MaeI,6.0%,30"
+                    },
+                ]
+            }
+        ],
+    }
+}
+
+
+
+
