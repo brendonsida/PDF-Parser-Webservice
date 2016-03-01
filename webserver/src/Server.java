@@ -16,7 +16,7 @@ public class Server {
         server.createContext("/highlight", new HighlightHandler());
         server.createContext("/find", new FindHandler());
         server.createContext("/post", new PGetHandler());
-        server.createContext("/", new PGetHandler());
+        server.createContext("/", new GetHandler());
         server.setExecutor(null); // creates a default executor
         server.start();
     }
@@ -116,6 +116,26 @@ public class Server {
             OutputStream os = t.getResponseBody();
             os.write(response.getBytes());
             os.close();
+        }
+    }
+    static class GetHandler implements HttpHandler {
+    @Override
+      public void handle(HttpExchange t) throws IOException {
+      String response = "This is the find response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
+      System.out.println(t.getRequestURI());
+      try {
+      File f = new File("../www"+t.getRequestURI());
+      byte[] b = new byte[(int) f.length()];
+      FileInputStream fis = new FileInputStream(f);
+      fis.read(b);
+      response = new String(b);
+      } catch (Exception e) {
+      System.out.println(e.getCause());
+      }
+      t.sendResponseHeaders(200, response.length());
+      OutputStream os = t.getResponseBody();
+      os.write(response.getBytes());
+      os.close();
         }
     }
 
