@@ -60,7 +60,8 @@ public class Server {
             byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar", fname), "csv"));
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "text/csv");
-            responseHeaders.set("Content-Disposition", "attachment; filename=\"" + fname.split("/")[2] + "\"");
+            //responseHeaders.set("Content-Disposition", "attachment; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
+            responseHeaders.set("Content-Disposition", "; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
@@ -89,7 +90,7 @@ public class Server {
             byte[] finished = loadFile(fname);
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/pdf");
-            responseHeaders.set("Content-Disposition", "attachment; filename=\"" + fname.split("/")[1] + "\"");
+            responseHeaders.set("Content-Disposition", "render; filename=\"" + System.currentTimeMillis() + ".pdf" + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
@@ -118,25 +119,32 @@ public class Server {
             os.close();
         }
     }
+    
     static class GetHandler implements HttpHandler {
     @Override
       public void handle(HttpExchange t) throws IOException {
-      String response = "This is the find response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
+      String response = "This is the 404 response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
       System.out.println(t.getRequestURI());
+      Headers responseHeaders = t.getResponseHeaders();
+      if(t.getRequestURI().toString().contains("png")){
+          responseHeaders.set("Content-Type", "image/png");
+      }
+      byte[] b = null;
       try {
-      File f = new File("../www"+t.getRequestURI());
-      byte[] b = new byte[(int) f.length()];
-      FileInputStream fis = new FileInputStream(f);
-      fis.read(b);
-      response = new String(b);
+      File f;
+      if(t.getRequestURI().toString().length()<2){
+       b = loadFile("../www/html/index.html");
+      }else{
+       b = loadFile("../www/"+t.getRequestURI());
+      }
       } catch (Exception e) {
       System.out.println(e.getCause());
       }
-      t.sendResponseHeaders(200, response.length());
+      t.sendResponseHeaders(200, b.length);
       OutputStream os = t.getResponseBody();
-      os.write(response.getBytes());
+      os.write(b);
       os.close();
-        }
+      }
     }
 
     static String toPDFFile(InputStream is) {
