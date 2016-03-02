@@ -12,10 +12,12 @@ public class Server {
 
     public static void main(String[] args) throws Exception {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-        server.createContext("/extract", new ExtractHandler());
+        server.createContext("/extract", new AutoExtractHandler());
+        server.createContext("/extract2", new ExtractHandler());
         server.createContext("/highlight", new HighlightHandler());
         server.createContext("/find", new FindHandler());
         server.createContext("/post", new PGetHandler());
+
         server.createContext("/", new GetHandler());
         server.setExecutor(null); // creates a default executor
         server.start();
@@ -26,11 +28,13 @@ public class Server {
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is);
+            byte[] b = loadFile(fname);
+            String coords = getCoordinates(b);
             //
             //Code to connect here
             //
             //Replace below with json doc
-            byte[] b = loadFile(fname);
+            byte[] finished = loadFile(fname);
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/pdf");
             responseHeaders.set("Content-Disposition", "attachment; filename=\"" + fname.split("/")[1] + "\"");
@@ -41,6 +45,22 @@ public class Server {
         }
     }
 
+    static class AutoExtractHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            InputStream is = t.getRequestBody();
+            String fname = toPDFFile(is);
+            byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar", fname), "csv"));
+            Headers responseHeaders = t.getResponseHeaders();
+            responseHeaders.set("Content-Type", "text/csv");
+            //responseHeaders.set("Content-Disposition", "attachment; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
+            responseHeaders.set("Content-Disposition", "; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
+            t.sendResponseHeaders(200, finished.length);
+            OutputStream os = t.getResponseBody();
+            os.write(finished);
+            os.close();
+        }
+    }
     static class ExtractHandler implements HttpHandler {
 
         @Override
@@ -49,12 +69,8 @@ public class Server {
             String fname = toPDFFile(is);
             byte[] b = loadFile(fname);
             String coords = getCoordinates(b);
-
+            String json = getJSON(b);
             System.out.println("Coords: " + coords + "\n");
-            //
-            //Code to connect here
-            //
-            //
 
             // loadFile returns the .csv file here or whatever filetype is specified
             byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar", fname), "csv"));
@@ -77,16 +93,8 @@ public class Server {
             byte[] b = loadFile(fname);
             String coords = getCoordinates(b);
             try {
-                System.out.println("inside highlight handler");
                 Highlighter.main(new String[] {fname, "coords.txt"});
-                System.out.println(fname);
-                System.out.println(fname.split("/")[2]);
             } catch (Exception e) {}
-
-            //
-            //Code to connect here
-            //
-            //
             byte[] finished = loadFile(fname);
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/pdf");
@@ -104,18 +112,10 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             String response = "This is the find response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
-            try {
-                File f = new File("../www/html/index.html");
-                byte[] b = new byte[(int) f.length()];
-                FileInputStream fis = new FileInputStream(f);
-                fis.read(b);
-                response = new String(b);
-            } catch (Exception e) {
-                System.out.println(e.getCause());
-            }
-            t.sendResponseHeaders(200, response.length());
+            byte[] b = loadFile("../www/html/test.html");
+            t.sendResponseHeaders(200, b.length);
             OutputStream os = t.getResponseBody();
-            os.write(response.getBytes());
+            os.write(b);
             os.close();
         }
     }
@@ -212,6 +212,26 @@ public class Server {
         scan.nextLine();
         String coords = scan.nextLine();
         return coords;
+    }
+    
+    static String getJSON(byte[]b) {
+        String json = "";
+        String s = new String(b);
+        Scanner scan = new Scanner(s);
+        scan.useDelimiter("CoordDoc");
+        scan.next();
+        scan.nextLine();
+        scan.nextLine();
+        boolean end = false;
+        while(!end){
+          String temp = scan.nextLine();
+          if(!temp.contains("------------")){
+          json  = json + temp + "\n";
+          }else{
+            end = !end;
+          }
+        }
+        return json;
     }
 
     static String JarExec(String filepath, String fname) {
