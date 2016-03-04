@@ -21,7 +21,7 @@ public class ExecTest
     commands.add("java");
     commands.add("-jar");
     commands.add(path);
-    commands.add("-g"+args);
+    commands.add("-g "+args);
  
     SystemCommandExecutor commandExecutor = new SystemCommandExecutor(commands);
     int result = commandExecutor.executeCommand();

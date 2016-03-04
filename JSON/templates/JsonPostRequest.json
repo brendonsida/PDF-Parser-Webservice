@@ -1,7 +1,7 @@
 {
-    "fileName": "name-of-pdf-for-extraction.pdf",
-    "fileUrl": "https://url-of-file-for-extraction",
-    "tables": [
+    "fileName": "name-of-file-parsed.pdf",
+    "fileUrl": "maybe-path-to-file?",
+    "coordinates": [
         {
             "page": "1",
             "y1": 254.3625,
@@ -36,6 +36,6 @@
             "x1": 48.5775,
             "y2": 382.1175,
             "x2": 531.2925
-        }
+        },
     ]
 }

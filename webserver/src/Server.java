@@ -1,7 +1,11 @@
-
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.Scanner;
+// import java.io.IOException;
+// import java.io.InputStreamReader;
+// import java.io.Reader;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
@@ -68,9 +72,19 @@ public class Server {
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is);
             byte[] b = loadFile(fname);
-            String coords = getCoordinates(b);
+
+            // JSON Start
             String json = getJSON(b);
-            System.out.println("Coords: " + coords + "\n");
+            JsonPostRequest req = null;
+            req = JsonUtility.parseJsonPostRequest(json);
+            int numTablesToParse = req.getNumTablesToParse()-1;
+            for (int i=0; i < numTablesToParse; i++) {
+                TableCoordinates table = req.getTableCoordinate(i);
+                String tabulaArgs = table.asArguments();
+                System.out.printf("Tabula args: %s\n", tabulaArgs);
+                // ToDo: Need to implement sending tabula command arguments here
+            }
+            // JSON End
 
             // loadFile returns the .csv file here or whatever filetype is specified
             byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar", fname), "csv"));
@@ -119,32 +133,32 @@ public class Server {
             os.close();
         }
     }
-    
+
     static class GetHandler implements HttpHandler {
-    @Override
-      public void handle(HttpExchange t) throws IOException {
-      String response = "This is the 404 response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
-      System.out.println(t.getRequestURI());
-      Headers responseHeaders = t.getResponseHeaders();
-      if(t.getRequestURI().toString().contains("png")){
-          responseHeaders.set("Content-Type", "image/png");
-      }
-      byte[] b = null;
-      try {
-      File f;
-      if(t.getRequestURI().toString().length()<2){
-       b = loadFile("../www/html/index.html");
-      }else{
-       b = loadFile("../www/"+t.getRequestURI());
-      }
-      } catch (Exception e) {
-      System.out.println(e.getCause());
-      }
-      t.sendResponseHeaders(200, b.length);
-      OutputStream os = t.getResponseBody();
-      os.write(b);
-      os.close();
-      }
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            String response = "This is the 404 response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
+            System.out.println(t.getRequestURI());
+            Headers responseHeaders = t.getResponseHeaders();
+            if (t.getRequestURI().toString().contains("png")) {
+                responseHeaders.set("Content-Type", "image/png");
+            }
+            byte[] b = null;
+            try {
+                File f;
+                if (t.getRequestURI().toString().length() < 2) {
+                    b = loadFile("../www/html/index.html");
+                } else {
+                    b = loadFile("../www/" + t.getRequestURI());
+                }
+            } catch (Exception e) {
+                System.out.println(e.getCause());
+            }
+            t.sendResponseHeaders(200, b.length);
+            OutputStream os = t.getResponseBody();
+            os.write(b);
+            os.close();
+        }
     }
 
     static String toPDFFile(InputStream is) {
@@ -213,7 +227,7 @@ public class Server {
         String coords = scan.nextLine();
         return coords;
     }
-    
+
     static String getJSON(byte[]b) {
         String json = "";
         String s = new String(b);
@@ -223,13 +237,13 @@ public class Server {
         scan.nextLine();
         scan.nextLine();
         boolean end = false;
-        while(!end){
-          String temp = scan.nextLine();
-          if(!temp.contains("------------")){
-          json  = json + temp + "\n";
-          }else{
-            end = !end;
-          }
+        while (!end) {
+            String temp = scan.nextLine();
+            if (!temp.contains("-WebKit")) {
+                json  = json + temp + "\n";
+            } else {
+                end = !end;
+            }
         }
         return json;
     }
