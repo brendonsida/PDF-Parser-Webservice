@@ -1,11 +1,12 @@
 SRC=src
 WWW=www
+JAR=jars
 TABULA=$(SRC)/target
 
 all: server
 
 server: 
-	javac -cp $(SRC)/pdfbox-app-1.8.11.jar:. $(SRC)/*.java
+	javac -cp $(JAR)/*:. $(SRC)/*.java
 	
 cleaninstall: clean
 	rm -fr $(TABULA)
