@@ -10,7 +10,7 @@ TESTSUITE=test-suite
 all: $(PROGS)
 
 app: 
-	./$(HEALTHCHECK)
+	# ./$(HEALTHCHECK)
 	cd $(TABULA); mvn clean compile assembly:single
 	cd $(SERVER); make
 
