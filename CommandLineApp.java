@@ -154,17 +154,7 @@ public class CommandLineApp {
                 switch(method) {
                 case BASIC:
                     if (line.hasOption('G')) {
-                        // guess the page areas to extract using a detection algorithm
-                        // currently we only have a detector that uses spreadsheets to find table areas
-                        //DetectionAlgorithm detector = new NurminenDetectionAlgorithm();
-                        //List<Rectangle> guesses = detector.detect(page);
-
-                        //for (Rectangle guessRect : guesses) {
-                        //    Page guess = page.getArea(guessRect);
-                        //    tables.addAll(basicExtractor.extract(guess));
-                        //}
-                        
-                       // the algorithm we're going to be testing
+                       
                         NurminenDetectionAlgorithm detectionAlgorithm = new NurminenDetectionAlgorithm();
                         PDDocument thisPdfDocument = PDDocument.load(pdfFile);
                         ObjectExtractor thisExtractor = new ObjectExtractor(thisPdfDocument);
@@ -179,13 +169,21 @@ public class CommandLineApp {
                                     writer.write(tablesOnPage.get(i).getLeft() + ",");
                                     writer.write(tablesOnPage.get(i).getBottom() + ",");
                                     writer.write(tablesOnPage.get(i).getRight() + "\n");
-                                    
-                                    //writer.println(tablesOnPage.get(i).toString());
                                 }
                             }
                         }
                         writer.close();
                         
+                    } else if (line.hasOption('g')) {
+                        // guess the page areas to extract using a detection algorithm
+                        // currently we only have a detector that uses spreadsheets to find table areas
+                        DetectionAlgorithm detector = new NurminenDetectionAlgorithm();
+                        List<Rectangle> guesses = detector.detect(page);
+
+                        for (Rectangle guessRect : guesses) {
+                            Page guess = page.getArea(guessRect);
+                            tables.addAll(basicExtractor.extract(guess));
+                        }    
                     } else {
                         tables.addAll(verticalRulingPositions == null ? basicExtractor.extract(page) : basicExtractor.extract(page, verticalRulingPositions));
                     }
