@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.lang.Integer;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -163,13 +164,34 @@ public class CommandLineApp {
                         while (thesePages.hasNext()) {
                             Page thisPage = thesePages.next();
                             List<Rectangle> tablesOnPage = detectionAlgorithm.detect(thisPage);
-                            if (tablesOnPage.size() > 0) {
-                                for (int i = 0; i < tablesOnPage.size(); i++) {
-                                    writer.write(tablesOnPage.get(i).getTop() + ",");
-                                    writer.write(tablesOnPage.get(i).getLeft() + ",");
-                                    writer.write(tablesOnPage.get(i).getBottom() + ",");
-                                    writer.write(tablesOnPage.get(i).getRight() + "\n");
+                            if (tablesOnPage.size() > 0) { 
+                            
+                                System.out.println("{");
+                                System.out.println("\"fileName\":" + "\"" + pdfFile + "\",");
+                                System.out.println("\"coordinates\": [");
+                                for (int i = 0; i < tablesOnPage.size(); i++) {                                                                    
+                                    System.out.println("\"page\": \"" + thisPage.getPageNumber() + "\",");  
+                                    System.out.println("\"y1\": " + tablesOnPage.get(i).getTop() + ",");
+                                    System.out.println("\"x1\": " + tablesOnPage.get(i).getLeft() + ",");
+                                    System.out.println("\"y2\": " + tablesOnPage.get(i).getBottom() + ",");
+                                    System.out.println("\"x2\": " + tablesOnPage.get(i).getRight());
+                                    System.out.println("},\n");
                                 }
+                                                     
+                                writer.write("{\n");
+                                writer.write("\"fileName\":" + "\"" + pdfFile + "\",\n");
+                                writer.write("\"coordinates\": [\n");                                
+                                
+                                for (int i = 0; i < tablesOnPage.size(); i++) {                                                                    
+                                    writer.write("\"page\":  \"" + thisPage.getPageNumber() + "\",\n");  
+                                    writer.write("\"y1\": " + tablesOnPage.get(i).getTop() + ",\n");
+                                    writer.write("\"x1\": " + tablesOnPage.get(i).getLeft() + ",\n");
+                                    writer.write("\"y2\": " + tablesOnPage.get(i).getBottom() + ",\n");
+                                    writer.write("\"x2\": " + tablesOnPage.get(i).getRight() + "\n");
+                                    writer.write("},\n");
+                                }
+                                writer.write("]\n");
+                                writer.write("}");
                             }
                         }
                         writer.close();
