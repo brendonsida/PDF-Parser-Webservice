@@ -24,13 +24,14 @@ public class TableCoordinates {
 
     public String asArguments() {
         StringBuilder sb = new StringBuilder();
+
         sb.append("-a ");
         sb.append(String.valueOf(y1) + ",");
         sb.append(String.valueOf(x1) + ",");
         sb.append(String.valueOf(y2) + ",");
         sb.append(String.valueOf(x2) + " ");
-        sb.append("-p ");
-        sb.append(page);
+        //sb.append("-p ");
+        //sb.append(page+",");
         return sb.toString();
     }
 

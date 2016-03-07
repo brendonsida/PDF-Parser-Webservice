@@ -33,18 +33,19 @@ public class Server {
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is);
             byte[] b = loadFile(fname);
-            String coords = getCoordinates(b);
+            //String coords = getCoordinates(b);
+            
             //
             //Code to connect here
             //
             //Replace below with json doc
-            byte[] finished = loadFile(fname);
+            byte[] finished = JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar",fname, new String[]{"-G","-i"}).getBytes();
             Headers responseHeaders = t.getResponseHeaders();
-            responseHeaders.set("Content-Type", "application/pdf");
-            responseHeaders.set("Content-Disposition", "attachment; filename=\"" + fname.split("/")[1] + "\"");
-            t.sendResponseHeaders(200, b.length);
+            responseHeaders.set("Content-Type", "application/json");
+            responseHeaders.set("Content-Disposition", "render; filename=\"" + System.currentTimeMillis() + ".json" + "\"");
+            t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
-            os.write(b);
+            os.write(finished);
             os.close();
         }
     }
@@ -54,11 +55,11 @@ public class Server {
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is);
-            byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar", fname), "csv"));
+            byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar",fname, new String[]{"-g","-fJSON"}), "csv"));
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "text/csv");
             //responseHeaders.set("Content-Disposition", "attachment; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
-            responseHeaders.set("Content-Disposition", "; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
+            responseHeaders.set("Content-Disposition", "render; filename=\"" + System.currentTimeMillis() + ".json" + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
@@ -74,25 +75,26 @@ public class Server {
             byte[] b = loadFile(fname);
 
             // JSON Start
+            String out = "";
             String json = getJSON(b);
-            
+            System.out.printf(json);
             JsonPostRequest req = null;
             req = JsonUtility.parseJsonPostRequest(json);
             int numTablesToParse = req.getNumTablesToParse()-1;
             for (int i=0; i < numTablesToParse; i++) {
                 TableCoordinates table = req.getTableCoordinate(i);
                 String tabulaArgs = table.asArguments();
-                System.out.printf("Tabula args: %s\n", tabulaArgs);
+                //System.out.printf("Tabula args: %s\n", tabulaArgs);
+                out = out + JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar",fname, new String[]{"-fJSON",tabulaArgs});
                 // ToDo: Need to implement sending tabula command arguments here
             }
             // JSON End
-
             // loadFile returns the .csv file here or whatever filetype is specified
-            byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar", fname), "csv"));
+            byte[] finished = out.getBytes();
             Headers responseHeaders = t.getResponseHeaders();
-            responseHeaders.set("Content-Type", "text/csv");
+            responseHeaders.set("Content-Type", "application/csv");
             //responseHeaders.set("Content-Disposition", "attachment; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
-            responseHeaders.set("Content-Disposition", "; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
+            responseHeaders.set("Content-Disposition", "render; filename=\"" + System.currentTimeMillis() + ".json" + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
@@ -106,7 +108,6 @@ public class Server {
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is);
             byte[] b = loadFile(fname);
-            String coords = getCoordinates(b);
             try {
                 Highlighter.main(new String[] {fname, "coords.txt"});
             } catch (Exception e) {}
@@ -240,7 +241,7 @@ public class Server {
         boolean end = false;
         while (!end) {
             String temp = scan.nextLine();
-            if (!temp.contains("-WebKit")) {
+            if (!temp.contains("-WebKit")&& !temp.contains("----")) {
                 json  = json + temp + "\n";
             } else {
                 end = !end;
@@ -249,9 +250,9 @@ public class Server {
         return json;
     }
 
-    static String JarExec(String filepath, String fname) {
+    static String JarExec(String filepath, String fname, String[] args) {
         try {
-            return ExecTest.main(new String[] {filepath, fname});
+            return ExecTest.main(new String[] {filepath,args[0],args[1], fname});
         } catch (Exception e) {
             return "Could not run Tabula";
         }
