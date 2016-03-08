@@ -21,55 +21,69 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.color.PDGamma;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationSquareCircle;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationTextMarkup;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary;
 
 import java.io.File;
 import java.util.List;
-import java.io.FileReader;
-import java.util.Scanner;
-import java.io.FileNotFoundException;
 
+
+
+/**
+ * @author acole, tWilder
+ * 
+ * JSON: REQUIREMENTS
+ * 
+ * Usage: For 1 annotation:
+ *	<input.pdf> <output.pdf> <PageNumber,LowerLeftX,LowerLeftY,UpperRightX,UpperRightY,R,G,B>
+ *
+ *	where:
+ *		input.pdf is the original file in which a copy is made and highlighted
+ *		output.pdf is the copy of input.pdf with the highlights embedded
+ *		PageNumber is an integer correlating to the page of the input.pdf document to which the highlight is to be applied
+ *		LowerLeftX is a float variable representing 1/4 corners of the bounding box to be highlighted 
+ *		LowerLeftY is a float variable representing 1/4 corners of the bounding box to be highlighted
+ *		UpperRightX is a float variable representing 1/4 corners of the bounding box to be highlighted
+ *		UpperRightX is a float variable representing 1/4 corners of the bounding box to be highlighted
+ *		R is an integer value from 0 to 255 representing the degree to which the red channel is set in the RGB color spectrum
+ * 		G is an integer value from 0 to 255 representing the degree to which the Green channel is set in the RGB color spectrum
+ *		B is an integer value from 0 to 255 representing the degree to which the Blue channel is set in the RGB color spectrum
+ *
+ *Usage: For multiple annotations:
+ *	<input.pdf> <output.pdf> <PageNumber,LowerLeftX,LowerLeftY,UpperRightX,UpperRightY,R,G,B> <PageNumber,LowerLeftX,LowerLeftY,UpperRightX,UpperRightY,R,G,B> ...
+ *
+ *	Where all variable are representative of the single annotation form except additional annotations are given separated by " "
+ */
 public class Highlighter
 {
-    /**     
-     * @param args The command line arguments.
-     *
-     * @throws Exception If there is an error parsing the document.
-     */
+
+
+    
     public static void main( String[] args ) throws Exception
     {
-        if( args.length != 2 ) {
-            System.out.println("Usage: <input pdf> <coords file>");
+        for (String arg : args) {
+            System.out.println(arg);
         }
-        else {
-        	File file = new File(args[0]);  
+        
+        if( args.length != 6 )
+        {
+            System.out.println("Usage: <input pdf> <output file> <lower left x> <lower left y> <upper right x> <upper right y>");
+            return;
+        }
+        else
+        {
+        	File file = new File(args[0]);
         	PDDocument document = PDDocument.load(file);
-        	
-        	File file2 = new File(args[1]);   
-        	Scanner inFile = null;
-        	String sequence = "";
-        	try {
-    			inFile = new Scanner(new FileReader(file2));
-    			while(inFile.hasNext()) {
-    				sequence += inFile.next();
-    			}
-    		} catch (FileNotFoundException fe) {
-    				System.out.println("File " + file2 + " not found.");
-    				fe.printStackTrace();
-    			}
-    		String[] coords = sequence.split(",");
-    		float[] coordinates = new float[4];
-    		for (int i = 0; i <4; i++) {
-    			coordinates[i] = Float.parseFloat(coords[i]);
-    		}
-    		
+
     	    List<PDPage> documentPages = document.getDocumentCatalog().getAllPages();
+
         	
-            try {
-            	PDPage page = documentPages.get(0);
-                //document.addPage(page);
-                List annotations = page.getAnnotations();
+            try
+            {
+            	PDPage page = documentPages.get(Integer.parseInt(args[1]));
+                List<PDAnnotation> annotations = page.getAnnotations();
 
                 // Setup some basic reusable objects/constants
                 // Annotations themselves can only be used once!
@@ -88,40 +102,34 @@ public class Highlighter
                 borderULine.setStyle(PDBorderStyleDictionary.STYLE_UNDERLINE);
                 borderULine.setWidth(inch/72); // 1 point
 
-                float pw = page.getMediaBox().getUpperRightX();
-                float ph = page.getMediaBox().getUpperRightY();
+                float pageHeight = page.getMediaBox().getUpperRightY();
 
-                // Add the markup annotation, a highlight to PDFBox text
-                PDFont font = PDType1Font.HELVETICA_BOLD;
-
-                float textWidth = (font.getStringWidth( "PDFBox" )/1000) * 10;
-                PDRectangle position = new PDRectangle();
-                
                 // Now a square annotation
 
-                PDAnnotationSquareCircle aHighlight =
-                    new PDAnnotationSquareCircle( PDAnnotationSquareCircle.SUB_TYPE_SQUARE);
-                aHighlight.setContents("Table 1");
-                aHighlight.setColour(colourGreen);  // Outline in green
-                aHighlight.setInteriorColour(colourGreen);  // Fill in green
-                aHighlight.setBorderStyle(borderThick);
-                aHighlight.setConstantOpacity((float)0.25);
+                PDAnnotationSquareCircle aSquare = new PDAnnotationSquareCircle( PDAnnotationSquareCircle.SUB_TYPE_SQUARE);
+                aSquare.setColour(colourGreen); 
+                aSquare.setInteriorColour(colourGreen);
+                aSquare.setBorderStyle(borderThick);
+                aSquare.setConstantOpacity((float)0.5);
 
-                position = new PDRectangle(); 
-                
-                position.setLowerLeftX(coordinates[1]);                
-                position.setLowerLeftY(ph-coordinates[2]);
-                position.setUpperRightX(coordinates[3]);
-                position.setUpperRightY(ph-coordinates[0]);
-                aHighlight.setRectangle(position);
-                
+
+                PDRectangle position = new PDRectangle(); 
+                position.setLowerLeftX(Float.parseFloat(args[3]));
+                position.setLowerLeftY(pageHeight-(Float.parseFloat(args[4]))); 
+                position.setUpperRightX(Float.parseFloat(args[5]));
+                position.setUpperRightY(pageHeight-(Float.parseFloat(args[2])));
+                aSquare.setRectangle(position);
+
                 //  add to the annotations on the page
-                annotations.add(aHighlight);
+                annotations.add(aSquare);
+              
                 document.save(args[0]);
             }
-            finally {
+            finally
+            {
                 document.close();
             }
         }
     }
+
 }

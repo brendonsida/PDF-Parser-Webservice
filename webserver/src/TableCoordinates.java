@@ -35,6 +35,19 @@ public class TableCoordinates {
         return sb.toString();
     }
 
+    public String highlighterArguments() {
+        StringBuilder sb = new StringBuilder();
+
+        //sb.append("-p ");
+        sb.append(page + " ");
+        //sb.append("-a ");
+        sb.append(String.valueOf(y1) + " ");
+        sb.append(String.valueOf(x1) + " ");
+        sb.append(String.valueOf(y2) + " ");
+        sb.append(String.valueOf(x2) + " ");
+        return sb.toString();
+    }
+
     @Override
     public String toString() {
         String pageNum = "Page Number: " + page + "\n";

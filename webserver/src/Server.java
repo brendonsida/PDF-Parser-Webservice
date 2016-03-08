@@ -31,10 +31,8 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
-            String fname = toPDFFile(is);
+            String fname = toPDFFile(is,1);
             byte[] b = loadFile(fname);
-            //String coords = getCoordinates(b);
-            
             //
             //Code to connect here
             //
@@ -42,7 +40,7 @@ public class Server {
             byte[] finished = JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar",fname, new String[]{"-G","-i"}).getBytes();
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/json");
-            responseHeaders.set("Content-Disposition", "render; filename=\"" + System.currentTimeMillis() + ".json" + "\"");
+            responseHeaders.set("Content-Disposition", "render; filename=\"" + "Finder_" + fname + ".json" + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
@@ -54,12 +52,12 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
-            String fname = toPDFFile(is);
+            String fname = toPDFFile(is,1);
             byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar",fname, new String[]{"-g","-fJSON"}), "csv"));
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "text/csv");
             //responseHeaders.set("Content-Disposition", "attachment; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
-            responseHeaders.set("Content-Disposition", "render; filename=\"" + System.currentTimeMillis() + ".json" + "\"");
+            responseHeaders.set("Content-Disposition", "render; filename=\"" + "Extractor_" + fname + ".json" + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
@@ -71,12 +69,13 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
-            String fname = toPDFFile(is);
+            String fname = toPDFFile(is,2);
             byte[] b = loadFile(fname);
 
             // JSON Start
             String out = "";
             String json = getJSON(b);
+            String filename = getFilename(b,2);            
             System.out.printf(json);
             JsonPostRequest req = null;
             req = JsonUtility.parseJsonPostRequest(json);
@@ -92,9 +91,9 @@ public class Server {
             // loadFile returns the .csv file here or whatever filetype is specified
             byte[] finished = out.getBytes();
             Headers responseHeaders = t.getResponseHeaders();
-            responseHeaders.set("Content-Type", "application/csv");
+            responseHeaders.set("Content-Type", "application/json");
             //responseHeaders.set("Content-Disposition", "attachment; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
-            responseHeaders.set("Content-Disposition", "render; filename=\"" + System.currentTimeMillis() + ".json" + "\"");
+            responseHeaders.set("Content-Disposition", "inline; filename=\"" + "Extractor_" + filename + ".json" + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
@@ -106,10 +105,26 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
-            String fname = toPDFFile(is);
+            String fname = toPDFFile(is,2);
             byte[] b = loadFile(fname);
+            System.out.println("This is the file name "+ fname);
+            // JSON Start
+            String out = "";
+            String json = getJSON(b);
+            String filename = getFilename(b,2);            
+            System.out.printf(json);
+            JsonPostRequest req = null;
+            req = JsonUtility.parseJsonPostRequest(json);
+            int numTablesToParse = req.getNumTablesToParse()-1;
+            
+            // JSON End
             try {
-                Highlighter.main(new String[] {fname, "coords.txt"});
+                for (int i=0; i < numTablesToParse; i++) {
+                TableCoordinates table = req.getTableCoordinate(i);
+                String tabulaArgs = table.highlighterArguments();
+                System.out.println("we are here sir");
+                Highlighter.main(new String[] {fname, tabulaArgs});           
+            }
             } catch (Exception e) {}
             byte[] finished = loadFile(fname);
             Headers responseHeaders = t.getResponseHeaders();
@@ -163,7 +178,7 @@ public class Server {
         }
     }
 
-    static String toPDFFile(InputStream is) {
+    static String toPDFFile(InputStream is, int filecount) {
         String fname = "";
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -174,7 +189,7 @@ public class Server {
             }
             buffer.flush();
             byte[] b = buffer.toByteArray();
-            fname = "../www/" + System.currentTimeMillis() + ".pdf";
+            fname = "../www/" + getFilename(b,filecount);
             File f = new File(fname);
             f.createNewFile();
             FileOutputStream fos = new FileOutputStream(f);
@@ -228,6 +243,18 @@ public class Server {
         scan.nextLine();
         String coords = scan.nextLine();
         return coords;
+    }
+    
+    static String getFilename(byte[]b,int filecount) {
+        String s = new String(b);
+        Scanner scan = new Scanner(s);
+        scan.useDelimiter("filename=\"");
+        scan.next();
+        if(filecount>1){
+            scan.next();
+        }
+        String filename = scan.nextLine();
+        return filename.split("\"")[1];
     }
 
     static String getJSON(byte[]b) {
