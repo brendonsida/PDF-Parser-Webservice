@@ -161,28 +161,35 @@ public class CommandLineApp {
                         ObjectExtractor thisExtractor = new ObjectExtractor(thisPdfDocument);
                         PrintWriter writer = new PrintWriter("out.txt", "UTF-8");
                         PageIterator thesePages = thisExtractor.extract();
+                            
+                        System.out.println("{");
+                        System.out.println("\"fileName\":" + "\"" + pdfFile + "\",");
+                        System.out.println("\"coordinates\": [");
+
                         while (thesePages.hasNext()) {
                             Page thisPage = thesePages.next();
                             List<Rectangle> tablesOnPage = detectionAlgorithm.detect(thisPage);
-                            if (tablesOnPage.size() > 0) { 
-                            
-                                System.out.println("{");
-                                System.out.println("\"fileName\":" + "\"" + pdfFile + "\",");
-                                System.out.println("\"coordinates\": [");
-                                for (int i = 0; i < tablesOnPage.size(); i++) {                                                                    
-                                    System.out.println("\"page\": \"" + thisPage.getPageNumber() + "\",");  
-                                    System.out.println("\"y1\": " + tablesOnPage.get(i).getTop() + ",");
-                                    System.out.println("\"x1\": " + tablesOnPage.get(i).getLeft() + ",");
-                                    System.out.println("\"y2\": " + tablesOnPage.get(i).getBottom() + ",");
-                                    System.out.println("\"x2\": " + tablesOnPage.get(i).getRight());
-                                    System.out.println("},\n");
+                            int numTables = tablesOnPage.size();
+                            if (numTables > 0) { 
+                                for (int i = 0; i < numTables; i++) {                                                                    
+
+                                    System.out.println("        {\n");  
+                                    System.out.println("            \"page\": \"" + thisPage.getPageNumber() + "\",");  
+                                    System.out.println("            \"y1\": " + tablesOnPage.get(i).getTop() + ",");
+                                    System.out.println("            \"x1\": " + tablesOnPage.get(i).getLeft() + ",");
+                                    System.out.println("            \"y2\": " + tablesOnPage.get(i).getBottom() + ",");
+                                    System.out.println("            \"x2\": " + tablesOnPage.get(i).getRight() + "");
+
+                                    // if we are printing last table, dont append comma after the '}'.
+                                    if (i == (numTables-1)) System.out.println("        }\n");  
+                                    else System.out.println("       },\n");  
                                 }
                                                      
                                 writer.write("{\n");
                                 writer.write("\"fileName\":" + "\"" + pdfFile + "\",\n");
                                 writer.write("\"coordinates\": [\n");                                
                                 
-                                for (int i = 0; i < tablesOnPage.size(); i++) {                                                                    
+                                for (int i = 0; i < numTables; i++) {                                                                    
                                     writer.write("\"page\":  \"" + thisPage.getPageNumber() + "\",\n");  
                                     writer.write("\"y1\": " + tablesOnPage.get(i).getTop() + ",\n");
                                     writer.write("\"x1\": " + tablesOnPage.get(i).getLeft() + ",\n");
@@ -195,6 +202,11 @@ public class CommandLineApp {
                             }
                         }
                         writer.close();
+                        
+                        // close "coordinates"
+                        System.out.println("    ]\n");
+                        // close json
+                        System.out.println("}\n");
                         
                     } else if (line.hasOption('g')) {
                         // guess the page areas to extract using a detection algorithm

@@ -3,7 +3,6 @@ import java.util.*;
 public class JsonPostRequest {
 
     private String fileName;
-    private String fileUrl;
     private ArrayList<TableCoordinates> coordinates;
 
     public int getNumTablesToParse() {
@@ -26,9 +25,9 @@ public class JsonPostRequest {
         return fileName;
     }
 
-    public String getFileUrl() {
-        return fileUrl;
-    }
+    // public String getFileUrl() {
+    //     return fileUrl;
+    // }
 
     @Override
     public String toString() {
@@ -40,7 +39,7 @@ public class JsonPostRequest {
         li = coordinates.listIterator();
         sb = new StringBuilder();
 
-        fileInfo = "File Name: " + fileName + ", File URL: " + fileUrl;
+        fileInfo = "File Name: " + fileName;
         sb.append(fileInfo + "\n");
         sb.append("Coordinates Info:" + "\n");
         c = li.next();
