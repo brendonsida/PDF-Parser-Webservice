@@ -19,7 +19,7 @@ public class Server {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         server.createContext("/extract", new AutoExtractHandler());
         server.createContext("/extract2", new ExtractHandler());
-        server.createContext("/highlight", new HighlightHandler());
+        server.createContext("/tablehighlight", new HighlightHandler());
         server.createContext("/find", new FindHandler());
         server.createContext("/post", new PGetHandler());
 
@@ -81,14 +81,27 @@ public class Server {
             JsonPostRequest req = null;
             req = JsonUtility.parseJsonPostRequest(json);
             int numTablesToParse = req.getNumTablesToParse()-1;
-            for (int i=0; i < numTablesToParse; i++) {
-                TableCoordinates table = req.getTableCoordinate(i);
-                String coords = table.getCoordinates();
-                String pageNum = table.getPage();
-                System.out.printf("coords: %s, pageNum: %s\n", coords, pageNum);
-                // TODO: Need to redirect System.out to return to the "out" String var
-                CommandLineApp.main(new String[] {fname, "-a", coords, "-p", pageNum});
+            //PrintStream sysout = System.out;
+            //ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            //System.setOut(new PrintStream(bs));
+            try{
+              for (int i=0; i < numTablesToParse; i++) {
+                  TableCoordinates table = req.getTableCoordinate(i);
+                  String coords = table.getCoordinates();
+                  String pageNum = table.getPage();
+                  System.err.printf("coords: %s, pageNum: %s\n", coords, pageNum);
+              
+                  // TODO: Need to redirect System.out to return to the "out" String var
+                  CommandLineApp.main(new String[] {fname, "-a", coords, "-p", pageNum});
+                  
+              }
             }
+            finally{
+              //System.setOut(sysout);
+            }
+            System.out.println("End of Work");
+            //System.out.println(bs.toString());
+            //out = bs.toString();
             // JSON End
             // loadFile returns the .csv file here or whatever filetype is specified
             byte[] finished = out.getBytes();
