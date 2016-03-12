@@ -38,7 +38,7 @@ import java.util.List;
  * JSON: REQUIREMENTS
  * 
  * Usage: For 1 annotation:
- *	<input.pdf> <output.pdf> <PageNumber,LowerLeftX,LowerLeftY,UpperRightX,UpperRightY,R,G,B>
+ *	<input.pdf> <output.pdf> <PageNumber,LowerLeftY,LowerLeftX,UpperRightY,UpperRightX>
  *
  *	where:
  *		input.pdf is the original file in which a copy is made and highlighted
@@ -53,7 +53,7 @@ import java.util.List;
  *		B is an integer value from 0 to 255 representing the degree to which the Blue channel is set in the RGB color spectrum
  *
  *Usage: For multiple annotations:
- *	<input.pdf> <output.pdf> <PageNumber,LowerLeftX,LowerLeftY,UpperRightX,UpperRightY,R,G,B> <PageNumber,LowerLeftX,LowerLeftY,UpperRightX,UpperRightY,R,G,B> ...
+ *	<input.pdf> <output.pdf> <PageNumber,LowerLeftY,LowerLeftX,UpperRightY,UpperRightX,R,G,B> <PageNumber,LowerLeftY,LowerLeftX,UpperRightY,UpperRightX,R,G,B> ...
  *
  *	Where all variable are representative of the single annotation form except additional annotations are given separated by " "
  */
@@ -64,17 +64,29 @@ public class Highlighter
     
     public static void main( String[] args ) throws Exception
     {
-        for (String arg : args) {
-            System.out.println(arg);
-        }
-        
-        if( args.length != 6 )
+      
+        if( args.length <= 1 )
         {
-            System.out.println("Usage: <input pdf> <output file> <lower left x> <lower left y> <upper right x> <upper right y>");
+            System.out.println("Usage: <input pdf> <PageNumber,LowerLeftY,LowerLeftX,UpperRightY,UpperRightX>");
             return;
         }
         else
         {
+            //Set up the arguments for single highlight annotation
+            String[] coordinates = args[1].split(" ");
+            String pageNumber = coordinates[0];
+            String y1 = coordinates[1];
+            String x1 = coordinates[2];
+            String y2 = coordinates[3];
+            String x2 = coordinates[4];
+         
+            System.out.println(pageNumber);
+            System.out.println(x1);
+            System.out.println(y1);
+            System.out.println(x2);
+            System.out.println(y2);
+
+
         	File file = new File(args[0]);
         	PDDocument document = PDDocument.load(file);
 
@@ -83,7 +95,8 @@ public class Highlighter
         	
             try
             {
-            	PDPage page = documentPages.get(Integer.parseInt(args[1]));
+                System.out.println("made it");
+            	PDPage page = documentPages.get(Integer.parseInt(pageNumber) - 1);
                 List<PDAnnotation> annotations = page.getAnnotations();
 
                 // Setup some basic reusable objects/constants
@@ -109,16 +122,15 @@ public class Highlighter
 
                 PDAnnotationSquareCircle aSquare = new PDAnnotationSquareCircle( PDAnnotationSquareCircle.SUB_TYPE_SQUARE);
                 aSquare.setColour(colourGreen); 
-                aSquare.setInteriorColour(colourGreen);
                 aSquare.setBorderStyle(borderThick);
                 aSquare.setConstantOpacity((float)0.5);
 
 
                 PDRectangle position = new PDRectangle(); 
-                position.setLowerLeftX(Float.parseFloat(args[3]));
-                position.setLowerLeftY(pageHeight-(Float.parseFloat(args[4]))); 
-                position.setUpperRightX(Float.parseFloat(args[5]));
-                position.setUpperRightY(pageHeight-(Float.parseFloat(args[2])));
+                position.setLowerLeftX(Float.parseFloat(x1));
+                position.setLowerLeftY(pageHeight-(Float.parseFloat(y1))); 
+                position.setUpperRightX(Float.parseFloat(x2));
+                position.setUpperRightY(pageHeight-(Float.parseFloat(y2)));
                 aSquare.setRectangle(position);
 
                 //  add to the annotations on the page
