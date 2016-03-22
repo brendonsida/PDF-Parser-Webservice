@@ -1,0 +1,30 @@
+{
+    "fileName": "name-of-pdf-for-extraction.pdf",
+    "fileUrl": "https://url-of-file-for-extraction",
+    "tables": [
+        {
+            "page": "1",
+            "color": "yellow",
+            "y1": 254.3625,
+            "x1": 48.5775,
+            "y2": 382.1175,
+            "x2": 531.2925
+        },
+        {
+            "page": "1",
+            "color": "red",
+            "y1": 254.3625,
+            "x1": 48.5775,
+            "y2": 382.1175,
+            "x2": 531.2925
+        },
+        {
+            "page": "59",
+            "color": "blue",
+            "y1": 254.3625,
+            "x1": 48.5775,
+            "y2": 382.1175,
+            "x2": 531.2925
+        }
+    ]
+}

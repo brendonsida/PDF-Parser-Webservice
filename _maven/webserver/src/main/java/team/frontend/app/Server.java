@@ -11,6 +11,10 @@ import com.sun.net.httpserver.HttpServer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+// import java.io.IOException;
+// import org.apache.commons.io.IOUtils;
+
 import technology.tabula.CommandLineApp;
 
 public class Server {
@@ -32,13 +36,13 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
-            String fname = toPDFFile(is,1);
+            String fname = toPDFFile(is, 1);
             byte[] b = loadFile(fname);
             //
             //Code to connect here
             //
             //Replace below with json doc
-            byte[] finished = JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar",fname, new String[]{"-G","-i"}).getBytes();
+            byte[] finished = JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar", fname, new String[] {"-G", "-i"}).getBytes();
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/json");
             responseHeaders.set("Content-Disposition", "render; filename=\"" + "Finder_" + fname + ".json" + "\"");
@@ -53,8 +57,8 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
-            String fname = toPDFFile(is,1);
-            byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar",fname, new String[]{"-g","-fJSON"}), "csv"));
+            String fname = toPDFFile(is, 1);
+            byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar", fname, new String[] {"-g", "-fJSON"}), "csv"));
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "text/csv");
             //responseHeaders.set("Content-Disposition", "attachment; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
@@ -70,34 +74,33 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
-            String fname = toPDFFile(is,2);
+            String fname = toPDFFile(is, 2);
             byte[] b = loadFile(fname);
 
             // JSON Start
             String out = "";
             String json = getJSON(b);
-            String filename = getFilename(b,2);            
+            String filename = getFilename(b, 2);
             System.out.printf(json);
             JsonPostRequest req = null;
             req = JsonUtility.parseJsonPostRequest(json);
-            int numTablesToParse = req.getNumTablesToParse()-1;
+            int numTablesToParse = req.getNumTablesToParse() - 1;
             //PrintStream sysout = System.out;
             //ByteArrayOutputStream bs = new ByteArrayOutputStream();
             //System.setOut(new PrintStream(bs));
-            try{
-              for (int i=0; i < numTablesToParse; i++) {
-                  TableCoordinates table = req.getTableCoordinate(i);
-                  String coords = table.getCoordinates();
-                  String pageNum = table.getPage();
-                  System.err.printf("coords: %s, pageNum: %s\n", coords, pageNum);
-              
-                  // TODO: Need to redirect System.out to return to the "out" String var
-                  CommandLineApp.main(new String[] {fname, "-a", coords, "-p", pageNum});
-                  
-              }
-            }
-            finally{
-              //System.setOut(sysout);
+            try {
+                for (int i = 0; i < numTablesToParse; i++) {
+                    TableCoordinates table = req.getTableCoordinate(i);
+                    String coords = table.getCoordinates();
+                    String pageNum = table.getPage();
+                    System.err.printf("coords: %s, pageNum: %s\n", coords, pageNum);
+
+                    // TODO: Need to redirect System.out to return to the "out" String var
+                    CommandLineApp.main(new String[] {fname, "-a", coords, "-p", pageNum});
+
+                }
+            } finally {
+                //System.setOut(sysout);
             }
             System.out.println("End of Work");
             //System.out.println(bs.toString());
@@ -120,26 +123,26 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
-            String fname = toPDFFile(is,2);
+            String fname = toPDFFile(is, 2);
             byte[] b = loadFile(fname);
-            System.out.println("This is the file name "+ fname);
+            System.out.println("This is the file name " + fname);
             // JSON Start
             String out = "";
             String json = getJSON(b);
-            String filename = getFilename(b,2);            
+            String filename = getFilename(b, 2);
             System.out.printf(json);
             JsonPostRequest req = null;
             req = JsonUtility.parseJsonPostRequest(json);
-            int numTablesToParse = req.getNumTablesToParse()-1;
-            
+            int numTablesToParse = req.getNumTablesToParse() - 1;
+
             // JSON End
             try {
-                for (int i=0; i < numTablesToParse; i++) {
-                TableCoordinates table = req.getTableCoordinate(i);
-                String tabulaArgs = table.highlighterArguments();
-                System.out.println("we are here sir");
-                Highlighter.main(new String[] {fname, tabulaArgs});           
-            }
+                for (int i = 0; i < numTablesToParse; i++) {
+                    TableCoordinates table = req.getTableCoordinate(i);
+                    String tabulaArgs = table.highlighterArguments();
+                    System.out.println("we are here sir");
+                    Highlighter.main(new String[] {fname, tabulaArgs});
+                }
             } catch (Exception e) {}
             byte[] finished = loadFile(fname);
             Headers responseHeaders = t.getResponseHeaders();
@@ -158,7 +161,7 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             String response = "This is the find response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
-            byte[] b = loadFile("./src/www/test.html");
+            byte[] b = loadFile("www/test.html");
             t.sendResponseHeaders(200, b.length);
             OutputStream os = t.getResponseBody();
             os.write(b);
@@ -170,7 +173,7 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             String response = "This is the 404 response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
-            System.out.println(t.getRequestURI());
+            System.out.println("User requested: " + t.getRequestURI());
             Headers responseHeaders = t.getResponseHeaders();
             if (t.getRequestURI().toString().contains("png")) {
                 responseHeaders.set("Content-Type", "image/png");
@@ -179,9 +182,9 @@ public class Server {
             try {
                 File f;
                 if (t.getRequestURI().toString().length() < 2) {
-                    b = loadFile("./src/www/index.html");
+                    b = loadFile("www/index.html");
                 } else {
-                    b = loadFile("./src/www/" + t.getRequestURI());
+                    b = loadFile("www/" + t.getRequestURI());
                 }
             } catch (Exception e) {
                 System.out.println(e.getCause());
@@ -192,6 +195,20 @@ public class Server {
             os.close();
         }
     }
+
+    // static String getFileWithUtil(String fileName) {
+
+    //     String result = "";
+
+    //     ClassLoader classLoader = getClass().getClassLoader();
+    //     try {
+    //         result = IOUtils.toString(classLoader.getResourceAsStream(fileName));
+    //     } catch (IOException e) {
+    //         e.printStackTrace();
+    //     }
+
+    //     return result;
+    // }
 
     static String toPDFFile(InputStream is, int filecount) {
         String fname = "";
@@ -204,7 +221,7 @@ public class Server {
             }
             buffer.flush();
             byte[] b = buffer.toByteArray();
-            fname = "./src/www/" + getFilename(b,filecount);
+            fname = "www/" + getFilename(b, filecount);
             File f = new File(fname);
             f.createNewFile();
             FileOutputStream fos = new FileOutputStream(f);
@@ -222,7 +239,7 @@ public class Server {
         try {
 
             byte[] b = contents.getBytes();
-            fname = "./src/www/" + System.currentTimeMillis() + "." + type;
+            fname = "www/" + System.currentTimeMillis() + "." + type;
             File f = new File(fname);
             f.createNewFile();
             FileOutputStream fos = new FileOutputStream(f);
@@ -259,13 +276,13 @@ public class Server {
         String coords = scan.nextLine();
         return coords;
     }
-    
-    static String getFilename(byte[]b,int filecount) {
+
+    static String getFilename(byte[]b, int filecount) {
         String s = new String(b);
         Scanner scan = new Scanner(s);
         scan.useDelimiter("filename=\"");
         scan.next();
-        if(filecount>1){
+        if (filecount > 1) {
             scan.next();
         }
         String filename = scan.nextLine();
@@ -283,7 +300,7 @@ public class Server {
         boolean end = false;
         while (!end) {
             String temp = scan.nextLine();
-            if (!temp.contains("-WebKit")&& !temp.contains("----")) {
+            if (!temp.contains("-WebKit") && !temp.contains("----")) {
                 json  = json + temp + "\n";
             } else {
                 end = !end;
@@ -294,7 +311,7 @@ public class Server {
 
     static String JarExec(String filepath, String fname, String[] args) {
         try {
-            return ExecTest.main(new String[] {filepath,args[0],args[1], fname});
+            return ExecTest.main(new String[] {filepath, args[0], args[1], fname});
         } catch (Exception e) {
             return "Could not run Tabula";
         }
