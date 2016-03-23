@@ -12,9 +12,6 @@ import com.sun.net.httpserver.HttpServer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-// import java.io.IOException;
-// import org.apache.commons.io.IOUtils;
-
 import technology.tabula.CommandLineApp;
 
 public class Server {
@@ -32,6 +29,7 @@ public class Server {
         server.start();
     }
 
+    // TODO: Method not verified working as of 3/23/16
     static class FindHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
@@ -41,8 +39,11 @@ public class Server {
             //
             //Code to connect here
             //
-            //Replace below with json doc
             byte[] finished = JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar", fname, new String[] {"-G", "-i"}).getBytes();
+            //
+            // TODO: Page number?? Need to add below
+            //
+            // Finder.main(new String[] {fname, "<insert-page-number-here>"});
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/json");
             responseHeaders.set("Content-Disposition", "render; filename=\"" + "Finder_" + fname + ".json" + "\"");
@@ -53,12 +54,21 @@ public class Server {
         }
     }
 
+    // TODO: Method not verified working as of 3/23/16
     static class AutoExtractHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is, 1);
-            byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar", fname, new String[] {"-g", "-fJSON"}), "csv"));
+            //
+            // TODO: Need to redirect System.out to return to the "out" String var
+            // CommandLineApp.main(new String[] {fname, "-g", "-f", "JSON", "csv"});
+            //
+            byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar",
+                                                      fname,
+                                                      new String[] {"-g", "-fJSON"}),
+                                                      "csv"));
+            //
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "text/csv");
             //responseHeaders.set("Content-Disposition", "attachment; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
@@ -161,7 +171,7 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             String response = "This is the find response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
-            byte[] b = loadFile("www/test.html");
+            byte[] b = loadFile("./src/www/test.html");
             t.sendResponseHeaders(200, b.length);
             OutputStream os = t.getResponseBody();
             os.write(b);
@@ -182,9 +192,9 @@ public class Server {
             try {
                 File f;
                 if (t.getRequestURI().toString().length() < 2) {
-                    b = loadFile("www/index.html");
+                    b = loadFile("./src/www/index.html");
                 } else {
-                    b = loadFile("www/" + t.getRequestURI());
+                    b = loadFile("./src/www/" + t.getRequestURI());
                 }
             } catch (Exception e) {
                 System.out.println(e.getCause());
@@ -195,20 +205,6 @@ public class Server {
             os.close();
         }
     }
-
-    // static String getFileWithUtil(String fileName) {
-
-    //     String result = "";
-
-    //     ClassLoader classLoader = getClass().getClassLoader();
-    //     try {
-    //         result = IOUtils.toString(classLoader.getResourceAsStream(fileName));
-    //     } catch (IOException e) {
-    //         e.printStackTrace();
-    //     }
-
-    //     return result;
-    // }
 
     static String toPDFFile(InputStream is, int filecount) {
         String fname = "";
@@ -221,7 +217,7 @@ public class Server {
             }
             buffer.flush();
             byte[] b = buffer.toByteArray();
-            fname = "www/" + getFilename(b, filecount);
+            fname = "./src/www/" + getFilename(b, filecount);
             File f = new File(fname);
             f.createNewFile();
             FileOutputStream fos = new FileOutputStream(f);
@@ -239,7 +235,7 @@ public class Server {
         try {
 
             byte[] b = contents.getBytes();
-            fname = "www/" + System.currentTimeMillis() + "." + type;
+            fname = "./src/www/" + System.currentTimeMillis() + "." + type;
             File f = new File(fname);
             f.createNewFile();
             FileOutputStream fos = new FileOutputStream(f);
