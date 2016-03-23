@@ -1,7 +1,5 @@
 #!/bin/bash
 
-mvn clean
-
-mvn package
+mvn clean install
 
 java -jar ./target/team.frontend.app-jar-with-dependencies.jar
