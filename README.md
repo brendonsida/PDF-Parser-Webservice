@@ -5,13 +5,13 @@ Team Front-End (Alex, Ben, Brendon, Tim)
 
 **For Clean Build:**
 
-    make cleaninstall
-    make
+    cd _maven/webserver
+    mvn clean install
     
 **To Start WebServices:**
 
-    cd webserver/src 
-    ./run.sh
+    cd _maven/webserver 
+    ./run_server.sh
     
 The webservice runs on localhost:8080.
 
