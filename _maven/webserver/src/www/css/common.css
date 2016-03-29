@@ -38,8 +38,8 @@
 button.submit {
 	width: 80%;
 	margin-bottom: 10%;
-    background-color: #CF5FF5;
-    border: 1px solid #CF5FF5;
+    background-color: #093f8b;
+    border: 1px solid #093f8b;
     border-radius: 3px;
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;
@@ -68,4 +68,8 @@ button.submit:active {
     -ms-box-shadow: 0 0 10px 5px #CF5FF5 inset;
     -o-box-shadow: 0 0 10px 5px #CF5FF5 inset;
      
+}
+
+.nav-links {
+    float: right !important;
 }
