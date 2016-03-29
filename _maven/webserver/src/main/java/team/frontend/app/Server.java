@@ -3,6 +3,7 @@ package team.frontend.app;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.Scanner;
+import java.security.*;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
@@ -22,28 +23,25 @@ public class Server {
         server.createContext("/extract2", new ExtractHandler());
         server.createContext("/tablehighlight", new HighlightHandler());
         server.createContext("/find", new FindHandler());
-        server.createContext("/post", new PGetHandler());
 
         server.createContext("/", new GetHandler());
         server.setExecutor(null); // creates a default executor
         server.start();
     }
 
-    // TODO: Method not verified working as of 3/23/16
+    // TODO: Method not verified working as of 3/23/16 - Seems to work now
     static class FindHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is, 1);
             byte[] b = loadFile(fname);
-            //
-            //Code to connect here
-            //
-            byte[] finished = JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar", fname, new String[] {"-G", "-i"}).getBytes();
-            //
-            // TODO: Page number?? Need to add below
-            //
-            // Finder.main(new String[] {fname, "<insert-page-number-here>"});
+            PrintStream sysout = System.out;
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            System.setOut(new PrintStream(bs));
+            Finder.main(new String[] {fname, "1"});
+            String out = bs.toString();
+            byte[] finished = out.getBytes();
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/json");
             responseHeaders.set("Content-Disposition", "render; filename=\"" + "Finder_" + fname + ".json" + "\"");
@@ -58,19 +56,24 @@ public class Server {
     static class AutoExtractHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
+            String out = "";
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is, 1);
-            //
-            // TODO: Need to redirect System.out to return to the "out" String var
-            // CommandLineApp.main(new String[] {fname, "-g", "-f", "JSON", "csv"});
-            //
-            byte[] finished = loadFile(toFile(JarExec("../../tabula-java/target/tabula-0.8.0-jar-with-dependencies.jar",
-                                                      fname,
-                                                      new String[] {"-g", "-fJSON"}),
-                                                      "csv"));
-            //
+            PrintStream sysout = System.out;
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            System.setOut(new PrintStream(bs));
+            try{
+              forbidSystemExitCall();
+              CommandLineApp.main(new String[] {fname, "-g", "-fJSON"});
+              }catch(SecurityException e){
+              }finally{
+              enableSystemExitCall();
+              System.setOut(sysout);
+            }
+            out = bs.toString();
+            byte[] finished = out.getBytes();
             Headers responseHeaders = t.getResponseHeaders();
-            responseHeaders.set("Content-Type", "text/csv");
+            responseHeaders.set("Content-Type", "application/json");
             //responseHeaders.set("Content-Disposition", "attachment; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
             responseHeaders.set("Content-Disposition", "render; filename=\"" + "Extractor_" + fname + ".json" + "\"");
             t.sendResponseHeaders(200, finished.length);
@@ -79,6 +82,7 @@ public class Server {
             os.close();
         }
     }
+    
     static class ExtractHandler implements HttpHandler {
 
         @Override
@@ -91,13 +95,13 @@ public class Server {
             String out = "";
             String json = getJSON(b);
             String filename = getFilename(b, 2);
-            System.out.printf(json);
             JsonPostRequest req = null;
             req = JsonUtility.parseJsonPostRequest(json);
             int numTablesToParse = req.getNumTablesToParse() - 1;
-            //PrintStream sysout = System.out;
-            //ByteArrayOutputStream bs = new ByteArrayOutputStream();
-            //System.setOut(new PrintStream(bs));
+            PrintStream sysout = System.out;
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            System.setOut(new PrintStream(bs));
+            forbidSystemExitCall();
             try {
                 for (int i = 0; i < numTablesToParse; i++) {
                     TableCoordinates table = req.getTableCoordinate(i);
@@ -106,17 +110,19 @@ public class Server {
                     System.err.printf("coords: %s, pageNum: %s\n", coords, pageNum);
 
                     // TODO: Need to redirect System.out to return to the "out" String var
-                    CommandLineApp.main(new String[] {fname, "-a", coords, "-p", pageNum});
-
+                    try{
+                    forbidSystemExitCall();
+                    CommandLineApp.main(new String[] {fname, "-a", coords, "-p", pageNum, "-fJSON"});
+                    }catch(SecurityException e){
+                    }finally{
+                      enableSystemExitCall();
+                    }
                 }
-            } finally {
-                //System.setOut(sysout);
+            }finally {
+                System.setOut(sysout);   
             }
-            System.out.println("End of Work");
-            //System.out.println(bs.toString());
-            //out = bs.toString();
+            out = bs.toString();
             // JSON End
-            // loadFile returns the .csv file here or whatever filetype is specified
             byte[] finished = out.getBytes();
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/json");
@@ -140,7 +146,6 @@ public class Server {
             String out = "";
             String json = getJSON(b);
             String filename = getFilename(b, 2);
-            System.out.printf(json);
             JsonPostRequest req = null;
             req = JsonUtility.parseJsonPostRequest(json);
             int numTablesToParse = req.getNumTablesToParse() - 1;
@@ -150,10 +155,10 @@ public class Server {
                 for (int i = 0; i < numTablesToParse; i++) {
                     TableCoordinates table = req.getTableCoordinate(i);
                     String tabulaArgs = table.highlighterArguments();
-                    System.out.println("we are here sir");
                     Highlighter.main(new String[] {fname, tabulaArgs});
                 }
             } catch (Exception e) {}
+            
             byte[] finished = loadFile(fname);
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/pdf");
@@ -161,20 +166,6 @@ public class Server {
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
-            os.close();
-        }
-    }
-
-
-
-    static class PGetHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange t) throws IOException {
-            String response = "This is the find response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
-            byte[] b = loadFile("./src/www/test.html");
-            t.sendResponseHeaders(200, b.length);
-            OutputStream os = t.getResponseBody();
-            os.write(b);
             os.close();
         }
     }
@@ -312,5 +303,23 @@ public class Server {
             return "Could not run Tabula";
         }
     }
-
+    private static class ExitTrappedException extends SecurityException { }
+      
+    private static void forbidSystemExitCall() {
+      final SecurityManager securityManager = new SecurityManager() {
+        public void checkPermission(Permission permission) {
+          if( "exitVM.*".equals( permission.getName() ) ) {
+            throw new ExitTrappedException() ;
+          }
+        }
+        public void checkExit(int status){
+          throw new SecurityException();
+        }
+      } ;
+      System.setSecurityManager( securityManager ) ;
+    }
+  
+    private static void enableSystemExitCall() {
+      System.setSecurityManager( null ) ;
+    }
 }

@@ -1,0 +1,22 @@
+Find:
+POST 
+/find
+Pages: <#>
+PDFFIle: <.pdf>
+
+Extract:
+POST 
+/extract2
+CoordDoc: <#>
+PDFFIle: <.pdf>
+
+Auto-Extract:
+POST 
+/extract
+PDFFIle: <.pdf>
+
+Highlight:
+POST 
+/tablehighlight
+CoordDoc: <#>
+PDFFIle: <.pdf>
