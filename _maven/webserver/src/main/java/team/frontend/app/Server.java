@@ -34,21 +34,24 @@ public class Server {
         @Override
         public void handle(HttpExchange t) throws IOException {
             InputStream is = t.getRequestBody();
-            String fname = toPDFFile(is, 1);
+            String fname = toPDFFile(is,1);
             byte[] b = loadFile(fname);
             PrintStream sysout = System.out;
             ByteArrayOutputStream bs = new ByteArrayOutputStream();
             System.setOut(new PrintStream(bs));
-            Finder.main(new String[] {fname, "1"});
+            Finder.main(new String[] {fname});
             String out = bs.toString();
             byte[] finished = out.getBytes();
+            System.setOut(sysout);
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/json");
-            responseHeaders.set("Content-Disposition", "render; filename=\"" + "Finder_" + fname + ".json" + "\"");
+            System.out.println("fname ="+fname);
+            responseHeaders.set("Content-Disposition", "render; filename=\"" + "Finder_" +  fname.split("/")[3].replace(".pdf","") + ".json" + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
             os.close();
+            deleteFile(fname);
         }
     }
 
@@ -64,7 +67,7 @@ public class Server {
             System.setOut(new PrintStream(bs));
             try{
               forbidSystemExitCall();
-              CommandLineApp.main(new String[] {fname, "-g", "-fJSON"});
+              CommandLineApp.main(new String[] {fname, "-g"});
               }catch(SecurityException e){
               }finally{
               enableSystemExitCall();
@@ -74,12 +77,13 @@ public class Server {
             byte[] finished = out.getBytes();
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/json");
-            //responseHeaders.set("Content-Disposition", "attachment; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
-            responseHeaders.set("Content-Disposition", "render; filename=\"" + "Extractor_" + fname + ".json" + "\"");
+            responseHeaders.set("Content-Disposition", "inline; filename=\"" + fname.split("/")[3].replace(".pdf","") + ".csv" + "\"");
+            //responseHeaders.set("Content-Disposition", "render; filename=\"" + "Extractor_" + fname.split("/")[3].replace(".pdf","") + ".json" + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
             os.close();
+            deleteFile(fname);
         }
     }
     
@@ -112,7 +116,7 @@ public class Server {
                     // TODO: Need to redirect System.out to return to the "out" String var
                     try{
                     forbidSystemExitCall();
-                    CommandLineApp.main(new String[] {fname, "-a", coords, "-p", pageNum, "-fJSON"});
+                    CommandLineApp.main(new String[] {fname, "-a", coords, "-p", pageNum});
                     }catch(SecurityException e){
                     }finally{
                       enableSystemExitCall();
@@ -126,12 +130,13 @@ public class Server {
             byte[] finished = out.getBytes();
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/json");
-            //responseHeaders.set("Content-Disposition", "attachment; filename=\"" + System.currentTimeMillis() + ".csv" + "\"");
-            responseHeaders.set("Content-Disposition", "inline; filename=\"" + "Extractor_" + filename + ".json" + "\"");
+            responseHeaders.set("Content-Disposition", "inline; filename=\"" + fname.split("/")[3].replace(".pdf","") + ".csv" + "\"");
+            //responseHeaders.set("Content-Disposition", "inline; filename=\"" + "Extractor_" +  fname.split("/")[3].replace(".pdf","") + ".json" + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
             os.close();
+            deleteFile(fname);
         }
     }
 
@@ -162,11 +167,12 @@ public class Server {
             byte[] finished = loadFile(fname);
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/pdf");
-            responseHeaders.set("Content-Disposition", "render; filename=\"" + System.currentTimeMillis() + ".pdf" + "\"");
+            responseHeaders.set("Content-Disposition", "render; filename=\"" + fname.split("/")[3]  + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
             os.close();
+            deleteFile(fname);
         }
     }
 
@@ -302,6 +308,10 @@ public class Server {
         } catch (Exception e) {
             return "Could not run Tabula";
         }
+    }
+    private static void deleteFile(String fname){
+      File f = new File(fname);
+      f.delete();
     }
     private static class ExitTrappedException extends SecurityException { }
       

@@ -58,7 +58,7 @@ public class Finder {
             }
         } catch ( ParseException exp ) {
             System.err.println("Error: " + exp.getMessage());
-            System.exit(1);
+            return;
         }
     }
 
