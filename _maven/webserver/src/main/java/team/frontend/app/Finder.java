@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.List;
 import java.lang.Integer;
 
+import java.lang.Float;
+
 import org.apache.commons.cli.ParseException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
@@ -72,8 +74,8 @@ public class Finder {
             PageIterator pages = extractor.extract();
 
             System.out.println("{");
-            System.out.println("\"fileName\":" + "\"" + pdf + "\",");
-            System.out.println("\"coordinates\": [");
+            System.out.println("    \"fileName\":" + "\"" + pdf + "\",");
+            System.out.println("    \"coordinates\": [");
 
             while (pages.hasNext()) {
                 Page page = pages.next();
@@ -81,17 +83,18 @@ public class Finder {
                 int numTables = tablesOnPage.size();
                 if (numTables > 0) {
                     writer.write("{\n");
-                    writer.write("\"fileName\":" + "\"" + pdf + "\",\n");
-                    writer.write("\"coordinates\": [\n");
+                    writer.write("    \"fileName\":" + "\"" + pdf + "\",\n");
+                    writer.write("    \"coordinates\": [\n");
 
                     if ( pageNumber == 0 ) {
                         for (int i = 0; i < numTables; i++) {
-                            System.out.println("        {\n");
+                            System.out.println("        {");
                             System.out.println("            \"page\": \"" + page.getPageNumber() + "\",");
                             System.out.println("            \"y1\": " + tablesOnPage.get(i).getTop() + ",");
                             System.out.println("            \"x1\": " + tablesOnPage.get(i).getLeft() + ",");
                             System.out.println("            \"y2\": " + tablesOnPage.get(i).getBottom() + ",");
                             System.out.println("            \"x2\": " + tablesOnPage.get(i).getRight() + "");
+                            System.out.println("},\n");
 
                             // if we are printing last table, dont append comma after the '}'.
                             if (i == (numTables - 1)) System.out.println("        }\n");
@@ -107,12 +110,15 @@ public class Finder {
                     } else {
                         for (int i = 0; i < numTables; i++) {
                             if ( page.getPageNumber() == pageNumber ) {
-                                System.out.println("        {\n");
+                                Float top = tablesOnPage.get(i).getTop();
+                                System.out.printf("Float top: %f\n", top.toString());
+                                System.out.println("        {");
                                 System.out.println("            \"page\": \"" + page.getPageNumber() + "\",");
                                 System.out.println("            \"y1\": " + tablesOnPage.get(i).getTop() + ",");
                                 System.out.println("            \"x1\": " + tablesOnPage.get(i).getLeft() + ",");
                                 System.out.println("            \"y2\": " + tablesOnPage.get(i).getBottom() + ",");
                                 System.out.println("            \"x2\": " + tablesOnPage.get(i).getRight() + "");
+                                System.out.println("        }");
 
                                 writer.write("\"page\":  \"" + page.getPageNumber() + "\",\n");
                                 writer.write("\"y1\": " + tablesOnPage.get(i).getTop() + ",\n");
@@ -130,9 +136,9 @@ public class Finder {
             writer.close();
 
             // close "coordinates"
-            System.out.println("    ]\n");
+            System.out.println("    ]");
             // close json
-            System.out.println("}\n");
+            System.out.println("}");
         } catch (IOException e) {
             throw new ParseException(e.getMessage());
         }
