@@ -48,6 +48,7 @@
     <build>
         <finalName>team.frontend.app</finalName>
 
+        <!-- Add HTML source directory -->
         <resources>
             <resource>
                 <directory>src/www</directory>
@@ -56,7 +57,7 @@
 
 
         <plugins>
-            <!-- Set a JDK compiler level -->
+            <!-- Set a compiler version -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -66,44 +67,35 @@
                     <target>${jdk.version}</target>
                 </configuration>
             </plugin>
+
+            <!-- Maven Assembly Plugin -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.6</version>
                 <configuration>
+                    <!-- Main Class -->
                     <archive>
                         <manifest>
                             <mainClass>team.frontend.app.Server</mainClass>
                         </manifest>
                     </archive>
+                    <!-- Get all project dependencies -->
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
-                        <phase>package</phase> <!-- bind to the packaging phase -->
+                        <!-- this is used for inheritance merges -->
+                        <id>make-assembly</id> 
+                        <!-- bind to the packaging phase -->
+                        <phase>package</phase> 
                         <goals>
                             <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.3.2</version>
-                <configuration>
-                    <excludes></excludes>
-                    <archive>
-                        <manifest>
-                            <!-- Jar file entry point -->
-                            <mainClass>team.frontend.app.Server</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-
         </plugins>
     </build>
 </project>
