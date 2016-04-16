@@ -1,8 +1,12 @@
 package team.frontend.app;
 
 /* Finder.java
-   A supplemental feature to the Tabula project which detects tables within a pdf
-   document (entire document or by page) and outputs the page and coordinates.
+ * A supplemental feature to the Tabula project which detects tables within a pdf
+ * document (entire document or by page) and outputs the page and coordinates.
+ *
+ * @author tWilder, bShewmake
+ *
+ * Usage: input.pdf [pageNumber]
 */
 
 import java.io.PrintWriter;
@@ -34,12 +38,13 @@ public class Finder {
             System.err.println("Usage: input.pdf [pageNumber]\n");
         }
 
+         // set up arguments for Finder   
         try {
             if (args.length == 1) {
                 pdfFile = new File(args[0]);
                 if (!pdfFile.exists()) {
                     System.err.println("File does not exist\n");
-                    System.exit(1);
+                    return;
                 } else {
                     Finder.findTables(pdfFile, pageNum);
                 }
@@ -48,12 +53,12 @@ public class Finder {
                     pageNum = Integer.parseInt(args[1]);
                 } catch (NumberFormatException e) {
                     System.err.println("Argument" + args[1] + " must be an integer.");
-                    System.exit(1);
+                    return;
                 }
                 pdfFile = new File(args[0]);
                 if (!pdfFile.exists()) {
                     System.err.println("File does not exist\n");
-                    System.exit(1);
+                    return;
                 } else {
                     Finder.findTables(pdfFile, pageNum);
                 }
@@ -63,7 +68,7 @@ public class Finder {
             return;
         }
     }
-
+      //Find tables in the subject pdf file using Nurminen Detection Algorithm
     static private void findTables(File pdf, int pageNumber) throws ParseException {
 
         try {
