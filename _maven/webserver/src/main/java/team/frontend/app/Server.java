@@ -29,39 +29,49 @@ public class Server {
         server.start();
     }
 
-    // TODO: Method not verified working as of 3/23/16 - Seems to work now
+    //Static hander for Find http context, see API for usage
     static class FindHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
+            //Get input from POST
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is,1);
             byte[] b = loadFile(fname);
             PrintStream sysout = System.out;
             ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            
+            //Capture output from Finder
             System.setOut(new PrintStream(bs));
             Finder.main(new String[] {fname});
             String out = bs.toString();
             byte[] finished = out.getBytes();
             System.setOut(sysout);
+            
+            //Respond to post request
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/json");
             System.out.println("fname ="+fname);
+            //Set Headers to show in browser
             responseHeaders.set("Content-Disposition", "render; filename=\"" + "Finder_" +  fname.split("/")[3].replace(".pdf","") + ".json" + "\"");
             t.sendResponseHeaders(200, finished.length);
             OutputStream os = t.getResponseBody();
             os.write(finished);
             os.close();
+            
+            //Remove temp file
             deleteFile(fname);
         }
     }
-
-    // TODO: Method not verified working as of 3/23/16
+    //Static hander for Auto Extract(Find+Extract) http context, see Webservice API for usage
     static class AutoExtractHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
+            //Get input from POST
             String out = "";
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is, 1);
+            
+            //Capture output from Tabula using guess flag
             PrintStream sysout = System.out;
             ByteArrayOutputStream bs = new ByteArrayOutputStream();
             System.setOut(new PrintStream(bs));
@@ -75,7 +85,10 @@ public class Server {
             }
             out = bs.toString();
             byte[] finished = out.getBytes();
+            
+            //Respond to post request
             Headers responseHeaders = t.getResponseHeaders();
+            //Set Headers to show in browser
             responseHeaders.set("Content-Type", "application/json");
             responseHeaders.set("Content-Disposition", "inline; filename=\"" + fname.split("/")[3].replace(".pdf","") + ".csv" + "\"");
             //responseHeaders.set("Content-Disposition", "render; filename=\"" + "Extractor_" + fname.split("/")[3].replace(".pdf","") + ".json" + "\"");
@@ -83,10 +96,13 @@ public class Server {
             OutputStream os = t.getResponseBody();
             os.write(finished);
             os.close();
+            
+            //Remove temp file
             deleteFile(fname);
         }
     }
     
+    //Static hander for Extract http context, see API for usage
     static class ExtractHandler implements HttpHandler {
 
         @Override
@@ -102,6 +118,9 @@ public class Server {
             JsonPostRequest req = null;
             req = JsonUtility.parseJsonPostRequest(json);
             int numTablesToParse = req.getNumTablesToParse() - 1;
+            // JSON End
+            
+            //Parse Tables
             PrintStream sysout = System.out;
             ByteArrayOutputStream bs = new ByteArrayOutputStream();
             System.setOut(new PrintStream(bs));
@@ -112,8 +131,6 @@ public class Server {
                     String coords = table.getCoordinates();
                     String pageNum = table.getPage();
                     System.err.printf("coords: %s, pageNum: %s\n", coords, pageNum);
-
-                    // TODO: Need to redirect System.out to return to the "out" String var
                     try{
                     forbidSystemExitCall();
                     CommandLineApp.main(new String[] {fname, "-a", coords, "-p", pageNum});
@@ -126,7 +143,8 @@ public class Server {
                 System.setOut(sysout);   
             }
             out = bs.toString();
-            // JSON End
+            
+            //Send Response
             byte[] finished = out.getBytes();
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/json");
@@ -139,23 +157,27 @@ public class Server {
             deleteFile(fname);
         }
     }
-
+    
+    //Static hander for tablehighlight http context, see API for usage
     static class HighlightHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
+            //Preprocess request
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is, 2);
             byte[] b = loadFile(fname);
             System.out.println("This is the file name " + fname);
-            // JSON Start
+            
+            // JSON  Processing Start
             String out = "";
             String json = getJSON(b);
             String filename = getFilename(b, 2);
             JsonPostRequest req = null;
             req = JsonUtility.parseJsonPostRequest(json);
             int numTablesToParse = req.getNumTablesToParse() - 1;
-
             // JSON End
+            
+            //Highlight tables
             try {
                 for (int i = 0; i < numTablesToParse; i++) {
                     TableCoordinates table = req.getTableCoordinate(i);
@@ -164,6 +186,7 @@ public class Server {
                 }
             } catch (Exception e) {}
             
+            //Http Response configure and send
             byte[] finished = loadFile(fname);
             Headers responseHeaders = t.getResponseHeaders();
             responseHeaders.set("Content-Type", "application/pdf");
@@ -175,10 +198,12 @@ public class Server {
             deleteFile(fname);
         }
     }
-
+  
+    //Get response for UI files
     static class GetHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
+            //Handle request for files on Server
             String response = "This is the 404 response \n" + t.getRequestMethod() + "\n" + t.getRequestHeaders().toString();
             System.out.println("User requested: " + t.getRequestURI());
             Headers responseHeaders = t.getResponseHeaders();
@@ -202,7 +227,8 @@ public class Server {
             os.close();
         }
     }
-
+    
+    //Temporarily store pdf, and retrive filename from request
     static String toPDFFile(InputStream is, int filecount) {
         String fname = "";
         try {
@@ -227,6 +253,7 @@ public class Server {
         return fname;
     }
 
+    //General purpose file save
     static String toFile(String contents, String type) {
         String fname = "";
         try {
@@ -245,6 +272,7 @@ public class Server {
         return fname;
     }
 
+    //General purpose load file 
     static byte[] loadFile(String fname) {
         byte[]b;
         try {
@@ -258,7 +286,8 @@ public class Server {
         }
         return b;
     }
-
+  
+    //Retrieve coordinates from request
     static String getCoordinates(byte[]b) {
         String s = new String(b);
         Scanner scan = new Scanner(s);
@@ -270,6 +299,7 @@ public class Server {
         return coords;
     }
 
+    //Retrieve filename from request
     static String getFilename(byte[]b, int filecount) {
         String s = new String(b);
         Scanner scan = new Scanner(s);
@@ -281,7 +311,8 @@ public class Server {
         String filename = scan.nextLine();
         return filename.split("\"")[1];
     }
-
+    
+    //Retrieve JSON from request
     static String getJSON(byte[]b) {
         String json = "";
         String s = new String(b);
@@ -301,18 +332,15 @@ public class Server {
         }
         return json;
     }
-
-    static String JarExec(String filepath, String fname, String[] args) {
-        try {
-            return ExecTest.main(new String[] {filepath, args[0], args[1], fname});
-        } catch (Exception e) {
-            return "Could not run Tabula";
-        }
-    }
+    
+    //Delete file
     private static void deleteFile(String fname){
       File f = new File(fname);
       f.delete();
     }
+    
+    // Helper functions to use Tabula without the Server dying
+    // Allows for selective ignorance of System.exit() calls
     private static class ExitTrappedException extends SecurityException { }
       
     private static void forbidSystemExitCall() {
@@ -332,4 +360,6 @@ public class Server {
     private static void enableSystemExitCall() {
       System.setSecurityManager( null ) ;
     }
+    //End of Helper functions 
+    
 }
