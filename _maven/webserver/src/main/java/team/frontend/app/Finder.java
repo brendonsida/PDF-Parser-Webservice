@@ -82,6 +82,11 @@ public class Finder {
             System.out.println("    \"fileName\":" + "\"" + pdf + "\",");
             System.out.println("    \"coordinates\": [");
 
+            // HERE IS WHERE I THINK THE MULTI-PAGE BUG IS
+            // ----
+            // 
+            // A two page document causes this while-loop to iterate twice..
+            // 
             while (pages.hasNext()) {
                 Page page = pages.next();
                 List<Rectangle> tablesOnPage = detectionAlgorithm.detect(page);
@@ -99,12 +104,14 @@ public class Finder {
                             System.out.println("            \"x1\": " + tablesOnPage.get(i).getLeft() + ",");
                             System.out.println("            \"y2\": " + tablesOnPage.get(i).getBottom() + ",");
                             System.out.println("            \"x2\": " + tablesOnPage.get(i).getRight() + "");
-                            System.out.println("},\n");
+                            System.out.println("        },\n");
 
                             // if we are printing last table, dont append comma after the '}'.
-                            if (i == (numTables - 1)) System.out.println("        }\n");
-                            else System.out.println("       },\n");
-
+                            // if (i == (numTables - 1)) System.out.println("        }\n");
+                            // else System.out.println("       },\n");
+                            
+                            // Does this first writer.write line need to be inserted?
+                            // writer.write("{,\n");
                             writer.write("\"page\":  \"" + page.getPageNumber() + "\",\n");
                             writer.write("\"y1\": " + tablesOnPage.get(i).getTop() + ",\n");
                             writer.write("\"x1\": " + tablesOnPage.get(i).getLeft() + ",\n");
@@ -123,8 +130,14 @@ public class Finder {
                                 System.out.println("            \"x1\": " + tablesOnPage.get(i).getLeft() + ",");
                                 System.out.println("            \"y2\": " + tablesOnPage.get(i).getBottom() + ",");
                                 System.out.println("            \"x2\": " + tablesOnPage.get(i).getRight() + "");
-                                System.out.println("        }");
+                                System.out.println("        },");
 
+                                // if we are printing last table, dont append comma after the '}'.
+                                // if (i == (numTables - 1)) System.out.println("        }\n");
+                                // else System.out.println("       },\n");
+
+                                // Does this first writer.write line need to be inserted?
+                                // writer.write("{,\n");
                                 writer.write("\"page\":  \"" + page.getPageNumber() + "\",\n");
                                 writer.write("\"y1\": " + tablesOnPage.get(i).getTop() + ",\n");
                                 writer.write("\"x1\": " + tablesOnPage.get(i).getLeft() + ",\n");
@@ -134,9 +147,9 @@ public class Finder {
                             }
                         }
                     }
-                    writer.write("]\n");
-                    writer.write("}");
                 }
+                writer.write("]\n");
+                writer.write("}");
             }
             writer.close();
 
