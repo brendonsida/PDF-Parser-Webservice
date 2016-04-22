@@ -1,9 +1,0 @@
-Tabula Command line AutoDetect
-
-How to run tabula with new -G flag (display table coordinates only):
-
-mvn clean compile assembly:single
-
-java -jar ./target/tabula-0.8.0-jar-with-dependencies.jar -G <fileName.pdf>
-
-table coordinates are written to out.txt
