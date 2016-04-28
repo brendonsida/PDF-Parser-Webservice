@@ -5,6 +5,8 @@ import java.net.InetSocketAddress;
 import java.util.Scanner;
 import java.security.*;
 
+import java.util.*;
+
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -37,12 +39,16 @@ public class Server {
             InputStream is = t.getRequestBody();
             String fname = toPDFFile(is,1);
             byte[] b = loadFile(fname);
+            String page = getPage(b);
+
+            byte[] slice = Arrays.copyOfRange(b, 100, b.length);
+            fname = toPDFFile(new ByteArrayInputStream(slice),1);
             PrintStream sysout = System.out;
             ByteArrayOutputStream bs = new ByteArrayOutputStream();
             
             //Capture output from Finder
             System.setOut(new PrintStream(bs));
-            Finder.main(new String[] {fname});
+            Finder.main(new String[] {fname, page});
             String out = bs.toString();
             byte[] finished = out.getBytes();
             System.setOut(sysout);
@@ -297,6 +303,18 @@ public class Server {
         scan.nextLine();
         String coords = scan.nextLine();
         return coords;
+    }
+
+    //Retrieve coordinates from request
+    static String getPage(byte[]b) {
+        String s = new String(b);
+        Scanner scan = new Scanner(s);
+        scan.useDelimiter("Page");
+        scan.next();
+        scan.nextLine();
+        scan.nextLine();
+        String page = scan.nextLine();
+        return page;
     }
 
     //Retrieve filename from request

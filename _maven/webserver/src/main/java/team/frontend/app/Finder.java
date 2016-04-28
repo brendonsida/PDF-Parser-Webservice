@@ -96,7 +96,7 @@ public class Finder {
                     writer.write("    \"fileName\":" + "\"" + pdf + "\",\n");
                     writer.write("    \"coordinates\": [\n");
 
-                    if ( pageNumber == 0 ) {
+                    if ( pageNumber == 0 || pageNumber == page.getPageNumber()) {
                         for (int i = 0; i < numTables; i++) {
                             System.out.println("        {");
                             System.out.println("            \"page\": \"" + page.getPageNumber() + "\",");
@@ -105,13 +105,7 @@ public class Finder {
                             System.out.println("            \"y2\": " + tablesOnPage.get(i).getBottom() + ",");
                             System.out.println("            \"x2\": " + tablesOnPage.get(i).getRight() + "");
                             System.out.println("        },\n");
-
-                            // if we are printing last table, dont append comma after the '}'.
-                            // if (i == (numTables - 1)) System.out.println("        }\n");
-                            // else System.out.println("       },\n");
                             
-                            // Does this first writer.write line need to be inserted?
-                            // writer.write("{,\n");
                             writer.write("\"page\":  \"" + page.getPageNumber() + "\",\n");
                             writer.write("\"y1\": " + tablesOnPage.get(i).getTop() + ",\n");
                             writer.write("\"x1\": " + tablesOnPage.get(i).getLeft() + ",\n");
@@ -119,34 +113,7 @@ public class Finder {
                             writer.write("\"x2\": " + tablesOnPage.get(i).getRight() + "\n");
                             writer.write("},\n");
                         }
-                    } else {
-                        for (int i = 0; i < numTables; i++) {
-                            if ( page.getPageNumber() == pageNumber ) {
-                                Float top = tablesOnPage.get(i).getTop();
-                                System.out.printf("Float top: %f\n", top.toString());
-                                System.out.println("        {");
-                                System.out.println("            \"page\": \"" + page.getPageNumber() + "\",");
-                                System.out.println("            \"y1\": " + tablesOnPage.get(i).getTop() + ",");
-                                System.out.println("            \"x1\": " + tablesOnPage.get(i).getLeft() + ",");
-                                System.out.println("            \"y2\": " + tablesOnPage.get(i).getBottom() + ",");
-                                System.out.println("            \"x2\": " + tablesOnPage.get(i).getRight() + "");
-                                System.out.println("        },");
-
-                                // if we are printing last table, dont append comma after the '}'.
-                                // if (i == (numTables - 1)) System.out.println("        }\n");
-                                // else System.out.println("       },\n");
-
-                                // Does this first writer.write line need to be inserted?
-                                // writer.write("{,\n");
-                                writer.write("\"page\":  \"" + page.getPageNumber() + "\",\n");
-                                writer.write("\"y1\": " + tablesOnPage.get(i).getTop() + ",\n");
-                                writer.write("\"x1\": " + tablesOnPage.get(i).getLeft() + ",\n");
-                                writer.write("\"y2\": " + tablesOnPage.get(i).getBottom() + ",\n");
-                                writer.write("\"x2\": " + tablesOnPage.get(i).getRight() + "\n");
-                                writer.write("},\n");
-                            }
-                        }
-                    }
+                    } 
                 }
                 writer.write("]\n");
                 writer.write("}");
